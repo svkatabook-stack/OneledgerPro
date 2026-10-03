@@ -31,3 +31,7 @@ Cloud sign-in is deliberately unavailable until the new authentication integrati
 ## Validation on 3 October 2026
 
 `npm run build`: passed. `npm run test:smoke`: 5 passed. Local workflow tests assert category and aggregate balances, photo storage, reload persistence, export download, and no external HTTP requests. `npm run lint`: 16 errors and 3 warnings remain from inherited patterns; this is not a production-hardening release.
+
+## Subsequent cloud foundation
+
+The original import boundary above is historical. The cloud implementation now uses a separate provider, real Supabase email/password sign-in, confirmed writes, and a tested fresh-project RLS schema with atomic transaction/delete RPCs. See CLOUD_SETUP.md. The legacy AppContext remains the local/demo provider; its old cloud code is not used by cloud mode. UI unit/export consistency and Cloudflare storage remain follow-up work.

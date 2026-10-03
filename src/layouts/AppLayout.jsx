@@ -8,7 +8,7 @@ import { isLocalMode } from '../lib/runtime';
 const AppLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { authSession, signOut } = useAppContext();
+    const { authSession, signOut, syncError } = useAppContext();
     const [isMenuOpen,    setIsMenuOpen]    = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -154,6 +154,7 @@ const AppLayout = () => {
             {/* Main Content Area */}
             <main className="app-main">
                 <div className="content-container animate-fade-in">
+                    {syncError && <div role="alert" style={{ padding: 12, color: '#fca5a5' }}>Cloud refresh failed: {syncError}. Showing the last loaded data.</div>}
                     <Outlet />
                 </div>
             </main>

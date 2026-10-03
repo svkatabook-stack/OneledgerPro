@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: '**/local-smoke.spec.js',
   timeout: 60000,
   workers: 1,
   use: {

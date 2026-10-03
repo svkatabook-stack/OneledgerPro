@@ -419,9 +419,10 @@ const Transactions = () => {
         setDeleteInput('');
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deleteInput !== 'DELETE') return;
-        deleteTransaction(pendingDeleteId);
+        try { await deleteTransaction(pendingDeleteId); }
+        catch (error) { alert('Delete failed: ' + error.message); return; }
         setPendingDeleteId(null);
         setDeleteInput('');
     };

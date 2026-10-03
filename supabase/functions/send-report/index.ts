@@ -1,6 +1,7 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
-import * as XLSX from 'npm:xlsx';
-import nodemailer from 'npm:nodemailer';
+import { reportPeriod } from './report-period.js';
+import { createClient } from 'npm:@supabase/supabase-js@2.100.0';
+import * as XLSX from 'npm:xlsx@0.18.5';
+import nodemailer from 'npm:nodemailer@6.10.1';
 
 const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -11,72 +12,52 @@ const GMAIL_USER  = Deno.env.get('GMAIL_USER')!;
 const GMAIL_PASS  = Deno.env.get('GMAIL_PASS')!;
 const REPORT_TO   = Deno.env.get('REPORT_TO')!;
 const CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
+const REPORT_ORG_ID = Deno.env.get('REPORT_ORG_ID') || '';
+const escapeHtml = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
+async function readAll(table: string, orgId: string, from?: string, to?: string) {
+    const rows = [];
+    for (let start=0; ; start+=500) {
+        let query = supabase.from(table).select('*').eq('org_id',orgId).order('id').range(start,start+499);
+        if (from && to) query = query.gte('date',from).lte('date',to).is('deleted_at',null);
+        const { data, error } = await query;
+        if (error) throw error;
+        rows.push(...data);
+        if (data.length<500) return rows;
+    }
+}
 
 const fmt2 = (v: unknown) => parseFloat(String(v || 0)).toFixed(2);
 const fmt3 = (v: unknown) => parseFloat(String(v || 0)).toFixed(3);
 const dir  = (v: unknown) => parseFloat(String(v || 0)) >= 0 ? 'jama' : 'nave (balance)';
 
 Deno.serve(async (req) => {
-    // Simple secret check — requests must include x-cron-secret header
-    if (CRON_SECRET && req.headers.get('x-cron-secret') !== CRON_SECRET) {
-        return new Response('Unauthorized', { status: 401 });
+    if (req.method !== 'POST') return new Response('Method not allowed', { status:405 });
+    if (!CRON_SECRET || !GMAIL_USER || !GMAIL_PASS || !REPORT_TO || !REPORT_ORG_ID) {
+        return new Response('Report service is not configured', { status:503 });
     }
-
-    const url  = new URL(req.url);
-    const type = url.searchParams.get('type') || 'daily'; // 'daily' | 'weekly'
-
-    // ── IST-aware dates ──────────────────────────────────────────────────────
-    const now       = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istNow    = new Date(now.getTime() + istOffset);
-    const todayIST  = istNow.toISOString().split('T')[0];
-
-    let dateFrom: string;
-    let dateTo:   string;
-    let reportTitle: string;
-    let sheetLabel: string;
-
-    if (type === 'daily') {
-        dateFrom    = todayIST;
-        dateTo      = todayIST;
-        reportTitle = `Daily Report — ${todayIST}`;
-        sheetLabel  = 'Today Transactions';
-    } else {
-        // Weekly: Mon–Sat of the week ending today (sent Sunday morning)
-        const day = istNow.getDay(); // 0=Sun
-        const mon = new Date(istNow);
-        mon.setDate(istNow.getDate() - (day === 0 ? 6 : day - 1));
-        const sat = new Date(mon);
-        sat.setDate(mon.getDate() + 5);
-        dateFrom    = mon.toISOString().split('T')[0];
-        dateTo      = sat.toISOString().split('T')[0];
-        reportTitle = `Weekly Report — ${dateFrom} to ${dateTo}`;
-        sheetLabel  = 'Week Transactions';
-    }
-
-    // ── Fetch data ───────────────────────────────────────────────────────────
-    const { data: orgs } = await supabase.from('organizations').select('id, name').limit(1);
-    const org = orgs?.[0];
-    if (!org) return new Response(JSON.stringify({ error: 'No org found' }), { status: 500 });
-
-    const { data: txs } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('org_id', org.id)
-        .gte('date', dateFrom)
-        .lte('date', dateTo)
-        .is('deleted_at', null)
-        .order('date', { ascending: false })
-        .order('time', { ascending: false });
-
-    const { data: custs } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('org_id', org.id)
-        .order('name');
-
-    const allTxs   = txs   || [];
-    const allCusts = custs || [];
+    if (req.headers.get('x-cron-secret') !== CRON_SECRET) return new Response('Unauthorized', { status:401 });
+    const type = new URL(req.url).searchParams.get('type') || 'daily';
+    if (!['daily','weekly'].includes(type)) return new Response('Invalid report type', { status:400 });
+    const { dateFrom, dateTo, todayIST } = reportPeriod(type);
+    const reportTitle = `${type === 'daily' ? 'Daily' : 'Weekly'} Report — ${dateFrom}${dateFrom === dateTo ? '' : ' to ' + dateTo}`;
+    const sheetLabel = type === 'daily' ? 'Day Transactions' : 'Week Transactions';
+    let runId: string | undefined;
+    let delivered = false;
+    try {
+    const { data: org, error: orgError } = await supabase.from('organizations').select('id,name').eq('id',REPORT_ORG_ID).single();
+    if (orgError || !org) throw new Error('Report organization missing');
+    // Unique period claim prevents two cron invocations from emailing twice.
+    const { data: run, error: claimError } = await supabase.from('report_runs').insert({
+        org_id:org.id, report_type:type, date_from:dateFrom, date_to:dateTo,
+    }).select('id').single();
+    if (claimError?.code === '23505') return new Response('This report period was already attempted; inspect report_runs', { status:409 });
+    if (claimError) throw claimError;
+    runId = run.id;
+    const [allTxs, allCusts] = await Promise.all([
+        readAll('transactions',org.id,dateFrom,dateTo), readAll('customers',org.id),
+    ]);
+    allTxs.sort((a,b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
     const custMap  = Object.fromEntries(allCusts.map(c => [c.id, c.name]));
 
     // ── Build Excel ──────────────────────────────────────────────────────────
@@ -232,7 +213,7 @@ ${overdueList.length > 0 ? `<div class="sec">
 <table><tr><th>Customer</th><th>Mobile</th><th>Due Date</th><th>Status</th></tr>
 ${overdueList.map(c => {
     const d = Math.floor((new Date(todayIST).getTime() - new Date(c.due_date).getTime()) / 86400000);
-    return `<tr><td>${c.name}</td><td>${c.mobile}</td><td>${c.due_date}</td><td><span class="ob">${d}d overdue</span></td></tr>`;
+    return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.mobile)}</td><td>${c.due_date}</td><td><span class="ob">${d}d overdue</span></td></tr>`;
 }).join('')}
 </table></div>` : ''}
 
@@ -241,11 +222,11 @@ ${overdueList.map(c => {
 ${txRows.length > 0 ? `<table>
 <tr><th>Date</th><th>Time</th><th>Customer</th><th>Category</th><th>Jama</th><th>Nave</th><th>By</th></tr>
 ${txRows.slice(0, 20).map(t => `<tr>
-  <td>${t['Date']}</td><td>${t['Time']}</td><td>${t['Customer']}</td>
-  <td>${t['Category']} ${t['Sub Type']}</td>
+  <td>${escapeHtml(t['Date'])}</td><td>${escapeHtml(t['Time'])}</td><td>${escapeHtml(t['Customer'])}</td>
+  <td>${escapeHtml(t['Category'])} ${escapeHtml(t['Sub Type'])}</td>
   <td class="g">${t['Jama'] ? t['Unit'] + t['Jama'] : ''}</td>
   <td class="r">${t['Nave'] ? t['Unit'] + t['Nave'] : ''}</td>
-  <td>${t['Added By']}</td>
+  <td>${escapeHtml(t['Added By'])}</td>
 </tr>`).join('')}
 </table>` : '<p style="color:#aaa;font-size:13px;margin:0">No transactions for this period.</p>'}
 </div>
@@ -261,6 +242,8 @@ ${txRows.slice(0, 20).map(t => `<tr>
         host: 'smtp.gmail.com',
         port: 465,
         secure: true,
+        connectionTimeout: 15000,
+        socketTimeout: 30000,
         auth: { user: GMAIL_USER, pass: GMAIL_PASS },
     });
 
@@ -276,8 +259,15 @@ ${txRows.slice(0, 20).map(t => `<tr>
         }],
     });
 
-    return new Response(
-        JSON.stringify({ ok: true, type, transactions: allTxs.length, file: fileName }),
-        { headers: { 'Content-Type': 'application/json' } },
-    );
+    delivered = true;
+    const { error: finishError } = await supabase.from('report_runs').update({ status:'sent', finished_at:new Date().toISOString() }).eq('id',runId);
+    if (finishError) throw finishError;
+    return Response.json({ ok:true, type, transactions:allTxs.length, file:fileName });
+    } catch (_error) {
+        if (runId && !delivered) await supabase.from('report_runs').update({
+            status:'failed', finished_at:new Date().toISOString(), error:'Delivery failed or unconfirmed. Inspect function logs before manually retrying.',
+        }).eq('id',runId);
+        console.error('Report failed', { runId, delivered });
+        return Response.json({ error: delivered ? 'Email sent but status update failed; do not resend automatically.' : 'Report delivery failed or unconfirmed.', runId }, { status:500 });
+    }
 });

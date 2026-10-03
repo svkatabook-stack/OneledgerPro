@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Button } from '../components/ui/Primitives';
 import { useAppContext } from '../context/AppContext';
 import { useToast } from '../components/ui/Toast';
+import { isLocalMode } from '../lib/runtime';
 import { supabase, isSupabaseReady } from '../lib/supabase';
 import { Database, Trash2, ArrowLeft, KeyRound, Eye, EyeOff, Download, HardDrive } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -237,7 +238,7 @@ const Settings = () => {
                 </h2>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    <div>
+                    {isLocalMode && <div>
                         <h3 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Database size={16} /> Development Tools
                         </h3>
@@ -248,8 +249,13 @@ const Settings = () => {
                         <Button variant="primary" onClick={handleSeed}>
                             Load Dummy Data
                         </Button>
-                    </div>
+                    </div>}
 
+                    {!isLocalMode && <div>
+                        <h3>Cloud account</h3>
+                        <p style={{ marginTop: 8 }}>{authSession?.email}</p>
+                        <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>Passwords and team access are managed through Supabase Authentication. Report delivery uses the server-side email configuration.</p>
+                    </div>}
                     {/* Export All Data */}
                     {isOwner && (
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
@@ -271,8 +277,8 @@ const Settings = () => {
                         </div>
                     )}
 
-                    {/* Access Passcodes — owner only */}
-                    {isOwner && (
+                    {/* Legacy local passcode controls */}
+                    {isOwner && isLocalMode && (
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
                             <h3 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <KeyRound size={16} /> Access Passcodes
@@ -361,7 +367,7 @@ const Settings = () => {
                         <Button variant="secondary" onClick={() => {
                             if (confirm('Clear authentication tokens? This will log you out but keep all customer and transaction data safe. Continue?')) {
                                 Object.keys(localStorage).forEach(key => {
-                                    if (key.startsWith('sb-')) {
+                                    if (key === 'oneledger-supabase-auth') {
                                         localStorage.removeItem(key);
                                     }
                                 });
@@ -373,7 +379,7 @@ const Settings = () => {
                         </Button>
                     </div>
 
-                    {isOwner && (
+                    {isOwner && isLocalMode && (
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
                             <h3 style={{ marginBottom: '0.5rem', color: 'var(--accent-red)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Trash2 size={16} /> Danger Zone

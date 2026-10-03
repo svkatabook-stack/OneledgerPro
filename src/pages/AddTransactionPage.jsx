@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowLeft, CheckCircle2, ChevronRight, Camera, X } from 'lucide-react';
+import { useToast } from '../components/ui/Toast';
 import { useAppContext, getCatBalKey } from '../context/AppContext';
 import { compressImage, uploadToCloudinary } from '../utils/imageUtils';
 import ReceiptModal from '../components/ReceiptModal';
@@ -75,6 +76,8 @@ const fmtBal = (val, isGrams) =>
 const AddTransactionPage = () => {
     const { customers, transactions, chitSchemes, addTransaction, authSession } = useAppContext();
     const navigate = useNavigate();
+    const { toast } = useToast();
+    const pendingSave = useRef(null);
 
     const [step,     setStep]     = useState(1);   // 1 | 2 | 3
     const [category, setCategory] = useState(null);
@@ -174,8 +177,8 @@ const AddTransactionPage = () => {
     /* ── Save ── */
     const canSave = n(amount) > 0 && (!isChit || scheme);
 
-    const handleSave = () => {
-        if (!canSave) return;
+    const handleSave = async () => {
+        if (!canSave || saving) return;
         setSaving(true);
 
         const val  = n(amount);
@@ -202,26 +205,25 @@ const AddTransactionPage = () => {
             due_date:    dueDate || null,
         };
 
-        addTransaction(txData);
-
-        // Show receipt
-        setReceipt({
-            ...txData,
-            id:              `${now.getTime()}`,
-            currentBalance:  prevBalance,
-            newBalance:      newBalance,
-            isGrams:         subCfg.isGrams,
-            categoryLabel:   catCfg?.label,
-            subTypeLabel:    subCfg?.label,
-        });
-
-        setSaved(true);
-        resetForm();
-        setSaved(false);
+        try {
+            const fingerprint = JSON.stringify({ ...txData, time: undefined });
+            // Reuse the UUID when the same save is retried after a network error.
+            if (pendingSave.current?.fingerprint !== fingerprint) pendingSave.current = { fingerprint, id: crypto.randomUUID() };
+            const entry = await addTransaction({ ...txData, id: pendingSave.current.id });
+            setReceipt({ ...entry, isGrams: subCfg.isGrams, categoryLabel: catCfg?.label, subTypeLabel: subCfg?.label });
+            pendingSave.current = null;
+            resetForm();
+        } catch (error) {
+            toast.error('Transaction not confirmed: ' + error.message);
+        } finally {
+            setSaving(false);
+        }
     };
 
     /* ── Receipt close ── */
     const handleReceiptClose = () => setReceipt(null);
+
+    if (authSession?.role === 'view') return <div className="atp-page">Your account has read-only access.</div>;
 
     /* ── Step 1: Category ── */
     if (step === 1) return (

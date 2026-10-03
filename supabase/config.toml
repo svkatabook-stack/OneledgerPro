@@ -1,0 +1,5 @@
+project_id = "oneledger-pro"
+
+# The handler requires x-cron-secret and fails closed if secrets are absent.
+[functions.send-report]
+verify_jwt = false

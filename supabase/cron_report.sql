@@ -1,53 +1,29 @@
--- ═══════════════════════════════════════════════════════════════════════
---  OneLedger Pro — Scheduled Email Reports via pg_cron + pg_net
---
---  BEFORE RUNNING:
---  1. Enable pg_net extension in Supabase Dashboard → Database → Extensions
---  2. Replace <YOUR_SUPABASE_URL>  with your project URL
---     e.g. https://abcdefghijkl.supabase.co
---  3. Replace <YOUR_ANON_KEY> with your project anon key
---  4. Replace <YOUR_CRON_SECRET> with the same value you added
---     as CRON_SECRET in Edge Function secrets
---  5. Run this entire file in Supabase → SQL Editor
--- ═══════════════════════════════════════════════════════════════════════
-
--- Enable required extensions
+-- Run ONLY after the function is deployed and a manual report has been verified.
+-- Add these secrets in Supabase Vault first:
+-- oneledger_project_url = https://zlcittlgjvsiwstkhjvv.supabase.co
+-- oneledger_cron_secret = same strong value as Edge Function CRON_SECRET
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
-
--- ── PRODUCTION: Daily report at 23:45 IST every day (18:15 UTC) ─────────
-select cron.schedule(
-    'daily-report',
-    '15 18 * * *',  -- 18:15 UTC = 23:45 IST
-    $$
-    select net.http_post(
-        url     := '<YOUR_SUPABASE_URL>/functions/v1/send-report?type=daily',
-        headers := jsonb_build_object(
-            'Content-Type',    'application/json',
-            'Authorization',   'Bearer <YOUR_ANON_KEY>',
-            'x-cron-secret',   '<YOUR_CRON_SECRET>'
-        ),
-        body    := '{}'::jsonb
-    );
-    $$
-);
-
--- ── PRODUCTION: Weekly report Sunday 8:00 AM IST (Sunday 02:30 UTC) ───
-select cron.schedule(
-    'weekly-report',
-    '30 2 * * 0',   -- 02:30 UTC Sunday = 08:00 IST Sunday
-    $$
-    select net.http_post(
-        url     := '<YOUR_SUPABASE_URL>/functions/v1/send-report?type=weekly',
-        headers := jsonb_build_object(
-            'Content-Type',    'application/json',
-            'Authorization',   'Bearer <YOUR_ANON_KEY>',
-            'x-cron-secret',   '<YOUR_CRON_SECRET>'
-        ),
-        body    := '{}'::jsonb
-    );
-    $$
-);
-
--- ── Verify schedules are registered ─────────────────────────────────────
-select jobname, schedule, active from cron.job order by jobname;
+do $$ begin
+ if not exists(select 1 from vault.decrypted_secrets where name='oneledger_cron_secret' and length(decrypted_secret)>=32)
+ or not exists(select 1 from vault.decrypted_secrets where name='oneledger_project_url' and decrypted_secret='https://zlcittlgjvsiwstkhjvv.supabase.co') then
+  raise exception 'Configure the OneLedger Vault secrets before scheduling';
+ end if;
+end $$;
+-- 00:15 IST: report covers the entire previous day, including late-night entries.
+select cron.schedule('oneledger-daily-report','45 18 * * *', $$
+ select net.http_post(
+  url := (select decrypted_secret from vault.decrypted_secrets where name='oneledger_project_url') || '/functions/v1/send-report?type=daily',
+  headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',(select decrypted_secret from vault.decrypted_secrets where name='oneledger_cron_secret')),
+  body := '{}'::jsonb, timeout_milliseconds := 60000
+ );
+$$);
+-- Sunday 08:00 IST: previous Sunday through Saturday, seven complete days.
+select cron.schedule('oneledger-weekly-report','30 2 * * 0', $$
+ select net.http_post(
+  url := (select decrypted_secret from vault.decrypted_secrets where name='oneledger_project_url') || '/functions/v1/send-report?type=weekly',
+  headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',(select decrypted_secret from vault.decrypted_secrets where name='oneledger_cron_secret')),
+  body := '{}'::jsonb, timeout_milliseconds := 60000
+ );
+$$);
+select jobname,schedule,active from cron.job where jobname like 'oneledger-%';

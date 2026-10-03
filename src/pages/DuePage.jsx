@@ -282,9 +282,10 @@ const DuePage = () => {
         else setExcludedIds(new Set(allIds));
     };
 
-    const handleExtend = () => {
+    const handleExtend = async () => {
         if (!extendDate) return;
-        updateCustomerDueDate(extendId, extendDate);
+        try { await updateCustomerDueDate(extendId, extendDate); }
+        catch (error) { alert('Due date not saved: ' + error.message); return; }
         setExtendId(null);
         setExtendDate('');
     };

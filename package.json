@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:smoke": "playwright test"
+    "test:smoke": "playwright test",
+    "test:cloud": "playwright test -c playwright.cloud.config.js",
+    "test:reports": "node --test tests/report-period.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.100.0",

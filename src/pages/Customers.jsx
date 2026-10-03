@@ -97,7 +97,7 @@ const fmtG = (v) => parseFloat(v || 0).toFixed(3);
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const Customers = () => {
-    const { customers, addCustomer, updateCustomer, getCustomerByMobile } = useAppContext();
+    const { customers, addCustomer, updateCustomer, getCustomerByMobile, authSession } = useAppContext();
     const { toast } = useToast();
     const navigate = useNavigate();
 
@@ -105,6 +105,7 @@ const Customers = () => {
     const [name, setName] = useState('');
     const [mobile, setMobile] = useState('');
     const [errors, setErrors] = useState({});
+    const [saving, setSaving] = useState(false);
 
     // Search & edit
     const [searchQuery, setSearchQuery] = useState('');
@@ -120,7 +121,8 @@ const Customers = () => {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        if (saving) return;
         const errs = {};
         if (!name.trim()) errs.name = 'Customer name is required';
         if (!mobile) errs.mobile = 'Mobile number is required';
@@ -132,15 +134,21 @@ const Customers = () => {
             return toast.warning('Duplicate mobile number.');
         }
 
-        addCustomer({ name: name.trim(), mobile, category: 'RETAIL', primary_category: 'CASH' });
-        toast.success(`${name.trim()} saved successfully!`);
-        setName(''); setMobile(''); setErrors({});
+        setSaving(true);
+        try {
+            await addCustomer({ name: name.trim(), mobile, category: 'RETAIL', primary_category: 'CASH' });
+            toast.success(`${name.trim()} saved successfully!`);
+            setName(''); setMobile(''); setErrors({});
+        } catch (error) { toast.error('Customer not saved: ' + error.message); }
+        finally { setSaving(false); }
     };
 
-    const handleEditSave = (id, updates) => {
-        updateCustomer(id, updates);
-        setEditCustomer(null);
-        toast.success('Customer updated.');
+    const handleEditSave = async (id, updates) => {
+        try {
+            await updateCustomer(id, updates);
+            setEditCustomer(null);
+            toast.success('Customer updated.');
+        } catch (error) { toast.error('Update failed: ' + error.message); }
     };
 
     // ── Export ────────────────────────────────────────────────────────────────
@@ -226,7 +234,7 @@ const Customers = () => {
                     </div>
                 </div>
                 <div className="cust-form-footer">
-                    <button className="btn-save" style={{ flex: 1 }} onClick={handleSave}>
+                    <button className="btn-save" style={{ flex: 1 }} onClick={handleSave} disabled={saving || authSession?.role === 'view'}>
                         <Check size={18} /> Save Customer
                     </button>
                 </div>

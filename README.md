@@ -1,6 +1,6 @@
 # OneLedger Pro
 
-A customer ledger for cash, gold, silver, and chit transactions. This repository is a fresh, rebranded baseline of the existing application, prepared for local use before new cloud services are connected.
+A customer ledger for cash, gold, silver, and chit transactions. This repository is a fresh, rebranded baseline of the existing application, with local demo mode and a separately authenticated Supabase cloud mode.
 
 ## Run locally
 
@@ -45,6 +45,8 @@ npm run build     # Production bundle in dist/
 npm run preview   # Preview the production bundle
 npm run lint      # Existing lint rules; inherited issues remain
 npm run test:smoke # Local browser smoke checks (requires Google Chrome)
+npm run test:cloud # Mocked cloud authentication/write checks
+npm run test:reports # Report calendar-period checks
 ```
 
 ## Verification of this baseline
@@ -52,19 +54,19 @@ npm run test:smoke # Local browser smoke checks (requires Google Chrome)
 - Production build passed.
 - Five Playwright smoke tests passed in an isolated Chrome profile: all three demo logins, customer creation, all eight category balances, an outgoing cash entry, local photo compression, reload persistence, page navigation, Excel download, and sample-data loading.
 - The main local workflow made no external HTTP requests.
-- Lint reports 16 inherited errors and 3 warnings. These remain deferred rather than changing the accounting/synchronization logic in the import.
+- Lint currently reports 19 errors and 4 warnings, including inherited issues and shared-export/hook warnings in the cloud integration. The lint check is not passing.
 
 ## New integrations — pending
 
 | Service | Planned use | Status |
 |---|---|---|
 | GitHub | svkatabook-stack/OneledgerPro | Source repository |
-| Supabase | Authentication, database, realtime, report function | Not connected |
-| Netlify | Website hosting | Configuration template included; not deployed |
+| Supabase | Authentication, database, realtime, report function | Implementation ready; provisioning tracked in setup guide |
+| Netlify | Website hosting | Site deployed; cloud activation pending |
 | Cloudflare | Images/storage | Adapter not implemented; local photos work |
 | Gmail | Send alerts from `s.vkatabook@gmail.com` | Not connected; recipient: `s.vkatabook@gmail.com` |
 
-`VITE_APP_MODE` defaults to `local`. Do not switch to `cloud` until authentication, permissions, and the inherited database/sync issues have been addressed. The old deployment's account credentials, project identifiers, upload settings, customer-specific dashboard accounts, and Git history were not imported. There are no shared cloud passwords in this version.
+`VITE_APP_MODE` defaults to `local`. Switch to `cloud` only after applying the new schema and creating/linking the owner as described in [Cloud setup](docs/CLOUD_SETUP.md). The old deployment's account credentials, project identifiers, upload settings, customer-specific dashboard accounts, and Git history were not imported. There are no shared cloud passwords in this version.
 
 The previous Cloudinary adapter remains in source for reference but is bypassed in local mode. Cloudinary and Cloudflare are different services; creating a Cloudflare account does not activate that adapter.
 
@@ -72,10 +74,11 @@ See [HANDOVER.md](HANDOVER.md) for the setup checklist and [docs/BASELINE.md](do
 
 ## Code map
 
-- `src/context/AppContext.jsx`: shared state, ledger operations, caching, and inherited Supabase synchronization.
+- `src/context/AppContext.jsx`: local ledger state and preserved legacy synchronization code.
+- `src/context/CloudAppProvider.jsx`: authenticated cloud state, paginated reads, and confirmed database writes.
 - `src/pages/`: login, dashboard, customers, transaction entry, ledger, dues, settings.
 - `src/components/`: receipts, UI primitives, and preserved legacy entry components.
 - `src/lib/runtime.js`: explicit local mode and demo passcodes.
 - `src/lib/supabase.js`: isolated Supabase client configuration.
 - `src/utils/imageUtils.js` and `src/workers/`: receipt-image compression and storage adapter.
-- `supabase/`: inherited schema/seed templates, email function, and cron templates.
+- `supabase/`: new database schema, owner seed, permission tests, email function, and cron setup.

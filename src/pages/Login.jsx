@@ -5,48 +5,26 @@ import { supabase, isSupabaseReady } from '../lib/supabase';
 import { isLocalMode, LOCAL_PASSCODES } from '../lib/runtime';
 import './Login.css';
 
-// Local demo access is separate from cloud authentication.
-// Cloud role accounts will be configured with the new Supabase project.
-const FALLBACK_HASHES = {};
-
 const ROLE_CONFIG = {
     owner: { label: 'Owner', icon: '👑', accent: 'gold',  title: 'Owner Sign In' },
     staff: { label: 'Staff', icon: '👤', accent: 'blue',  title: 'Staff Sign In' },
     view:  { label: 'View',  icon: '👁', accent: 'muted', title: 'View Access'   },
 };
 
-const hashPassword = async (text) => {
-    const msgUint8 = new TextEncoder().encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
 const Login = () => {
-    const { setAuthSession } = useAppContext();
-    const [selectedRole, setSelectedRole] = useState(null);
+    const { setAuthSession, authError } = useAppContext();
+    const [email, setEmail] = useState('s.vkatabook@gmail.com');
+    const [selectedRole, setSelectedRole] = useState(isLocalMode ? null : 'owner');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [devMode, setDevMode] = useState(false);
-    const [orgHashes, setOrgHashes] = useState(null);
-
     useEffect(() => {
-        const checkHash = () => setDevMode(window.location.hash === '#devmode');
+        const checkHash = () => setDevMode(isLocalMode && window.location.hash === '#devmode');
         checkHash();
         window.addEventListener('hashchange', checkHash);
         return () => window.removeEventListener('hashchange', checkHash);
-    }, []);
-
-    // Fetch org passcode hashes (anon access — works before login)
-    useEffect(() => {
-        if (!isSupabaseReady()) return;
-        supabase
-            .from('organizations')
-            .select('passcode_owner_hash, passcode_staff_hash, passcode_view_hash')
-            .single()
-            .then(({ data }) => { if (data) setOrgHashes(data); });
     }, []);
 
     const handleRoleSelect = (role) => {
@@ -66,10 +44,6 @@ const Login = () => {
         e.preventDefault();
         setError('');
         setLoading(true);
-        // Track whether Supabase auth was dispatched — in that case we leave the
-        // spinner running until onAuthStateChange fires and unmounts this component.
-        const supabaseAuthDispatched = false;
-
         try {
             // Dev/super-admin shortcut
             if (isLocalMode && devMode && password === 'admin') {
@@ -77,20 +51,11 @@ const Login = () => {
                 return;
             }
 
-            // ── Path 1: Supabase Auth with hash verification ──────────────────
-            if (isSupabaseReady()) {
-                if (window.crypto?.subtle) {
-                    const hashed = await hashPassword(password);
-                    const expectedHash = orgHashes?.[`passcode_${selectedRole}_hash`] || FALLBACK_HASHES[selectedRole];
-                    if (hashed !== expectedHash) {
-                        setError('Invalid passcode.');
-                        return;
-                    }
-                }
-
-                setError('Cloud sign-in setup is pending. Use local mode for now.');
+            if (!isLocalMode) {
+                if (!isSupabaseReady()) throw new Error('Cloud connection is not configured.');
+                const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+                if (error) throw error;
                 return;
-
             }
 
             // Local mode keeps all ledger data in this browser.
@@ -105,7 +70,7 @@ const Login = () => {
             console.error(err);
             setError('Login error: ' + err.message);
         } finally {
-            if (!supabaseAuthDispatched) setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -151,17 +116,19 @@ const Login = () => {
                 {selectedRole && (
                     <div>
                         <div className="login-step-header">
-                            <button className="login-back-btn" onClick={handleBack} type="button">
+                            {isLocalMode && <button className="login-back-btn" onClick={handleBack} type="button">
                                 <ArrowLeft size={18} />
-                            </button>
-                            <span className="login-step-title">{roleConfig.title}</span>
+                            </button>}
+                            <span className="login-step-title">{isLocalMode ? roleConfig.title : 'Sign in to your ledger'}</span>
                         </div>
 
                         <form onSubmit={handleLogin} className="login-form">
+                            {!isLocalMode && <div className="input-group"><input type="email" aria-label="Email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required /></div>}
                             <div className="input-group" style={{ position: 'relative' }}>
                                 <input
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="Enter Passcode..."
+                                    placeholder={isLocalMode ? 'Enter Passcode...' : 'Password'}
+                                    autoComplete="current-password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     autoFocus
@@ -180,7 +147,7 @@ const Login = () => {
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
-                            {error && <div className="login-error">{error}</div>}
+                            {(error || authError) && <div className="login-error" role="alert">{error || authError}</div>}
 
                             <button type="submit" className="login-btn" disabled={loading || !password}>
                                 {loading
@@ -190,7 +157,7 @@ const Login = () => {
                             </button>
                         </form>
 
-                        <p className="login-footer-hint">Contact your administrator for your access code</p>
+                        <p className="login-footer-hint">{isLocalMode ? 'Local demo access' : 'Use the password set for your Supabase Auth account.'}</p>
                     </div>
                 )}
 

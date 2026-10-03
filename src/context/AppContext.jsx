@@ -1,15 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, isSupabaseReady, cleanupSupabaseStorage } from '../lib/supabase';
 
-const AppContext = createContext();
+export const AppContext = createContext();
 export const useAppContext = () => useContext(AppContext);
 
 // ── Supabase ↔ local data mappers ───────────────────────────────────────────
 
-const dbCustToLocal = (row) => ({
+export const dbCustToLocal = (row) => ({
     id: row.id,
     name: row.name,
     mobile: row.mobile,
+    mobile2: row.mobile2 || '',
     tag: row.tag || '',
     category: row.primary_category || 'RETAIL',
     primary_category: row.primary_category || 'CASH',
@@ -28,7 +29,7 @@ const dbCustToLocal = (row) => ({
     createdAt: row.created_at,
 });
 
-const dbTxToLocal = (row) => ({
+export const dbTxToLocal = (row) => ({
     id: row.id,
     cid: row.customer_id,
     type: row.type,

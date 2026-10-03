@@ -2,6 +2,8 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import AppLayout from './layouts/AppLayout';
+import { CloudAppProvider } from './context/CloudAppProvider';
+import { isLocalMode } from './lib/runtime';
 import Login from './pages/Login'; // eager — needed immediately for auth gate
 
 // Lazy-load all pages — only downloaded when the user navigates to that route
@@ -21,7 +23,9 @@ const PageLoader = () => (
 );
 
 const AppContent = () => {
-  const { authSession } = useAppContext();
+  const { authSession, authLoading } = useAppContext();
+
+  if (authLoading) return <PageLoader />;
 
   if (!authSession) {
     return <Login />;
@@ -47,10 +51,11 @@ const AppContent = () => {
 };
 
 function App() {
+  const Provider = isLocalMode ? AppProvider : CloudAppProvider;
   return (
-    <AppProvider>
+    <Provider>
       <AppContent />
-    </AppProvider>
+    </Provider>
   );
 }
 
