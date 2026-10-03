@@ -62,7 +62,7 @@ npm run test:smoke # Local browser smoke checks (requires Google Chrome)
 | Supabase | Authentication, database, realtime, report function | Not connected |
 | Netlify | Website hosting | Configuration template included; not deployed |
 | Cloudflare | Images/storage | Adapter not implemented; local photos work |
-| Gmail | Send alerts from `s.vkatabook@gmail.com` | Not connected; recipient still to be configured |
+| Gmail | Send alerts from `s.vkatabook@gmail.com` | Not connected; recipient: `s.vkatabook@gmail.com` |
 
 `VITE_APP_MODE` defaults to `local`. Do not switch to `cloud` until authentication, permissions, and the inherited database/sync issues have been addressed. The old deployment's account credentials, project identifiers, upload settings, customer-specific dashboard accounts, and Git history were not imported. There are no shared cloud passwords in this version.
 

@@ -8,7 +8,14 @@ Destination: https://github.com/svkatabook-stack/OneledgerPro
 
 The import uses a fresh Git history so old production configuration is not present in previous commits. The original checkout is preserved separately.
 
-## Supabase — after account creation
+## Supabase — new project created
+
+Project URL: `https://zlcittlgjvsiwstkhjvv.supabase.co`.
+Planned owner login: `s.vkatabook@gmail.com`.
+The publishable key is saved in the ignored local `.env.local`; app mode remains `local`.
+The owner auth user, database schema, and access policies have not yet been provisioned.
+
+### Remaining setup
 
 1. Create a new project and retain its database password privately.
 2. Configure the project's URL and public browser key in local/deployment environment variables when cloud integration work begins.
@@ -39,7 +46,7 @@ Configure server-side secrets only:
 
 - `GMAIL_USER`: `s.vkatabook@gmail.com`
 - `GMAIL_PASS`: Gmail app password after enabling 2-Step Verification
-- `REPORT_TO`: intended recipient address; still to be decided
+- `REPORT_TO`: `s.vkatabook@gmail.com`
 - `CRON_SECRET`: new random secret
 
 Never put a Gmail password, app password, service-role key, or Cloudflare API token into a `VITE_*` variable or a committed file. Use the Supabase secret manager when deploying the reporting function.
