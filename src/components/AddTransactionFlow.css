@@ -1,0 +1,349 @@
+/* AddTransactionFlow.css */
+
+/* ── Content overrides ───────────────────────────────────────────────────── */
+.atf-content {
+    max-height: 94vh;
+}
+
+.atf-header {
+    flex-direction: row;
+    align-items:    center;
+}
+
+/* ── YOU GOT / YOU GAVE tabs ─────────────────────────────────────────────── */
+.atf-op-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+}
+
+.atf-op-tab {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    justify-content: center;
+    padding:         1rem 0.5rem;
+    border-radius:   14px;
+    border:          2px solid rgba(255, 255, 255, 0.07);
+    background:      rgba(255, 255, 255, 0.02);
+    color:           var(--text-muted);
+    cursor:          pointer;
+    transition:      all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight:     700;
+    font-size:       0.85rem;
+    letter-spacing:  0.07em;
+    text-transform:  uppercase;
+}
+
+.atf-op-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+}
+
+/* YOU GOT — active: vivid green with glow */
+.atf-op-got {
+    border-color: #22c55e;
+    background:   rgba(34, 197, 94, 0.13);
+    color:        #22c55e;
+    box-shadow:   0 0 18px rgba(34, 197, 94, 0.22), inset 0 1px 0 rgba(34, 197, 94, 0.15);
+}
+
+/* YOU GAVE — active: vivid amber with glow */
+.atf-op-gave {
+    border-color: #f59e0b;
+    background:   rgba(245, 158, 11, 0.13);
+    color:        #f59e0b;
+    box-shadow:   0 0 18px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(245, 158, 11, 0.15);
+}
+
+.atf-op-main {
+    font-size:   0.95rem;
+    font-weight: 800;
+}
+
+.atf-op-sub {
+    font-size:   0.68rem;
+    font-weight: 400;
+    margin-top:  3px;
+    letter-spacing: 0;
+    text-transform: none;
+    opacity: 0.75;
+}
+
+/* ── Category pills ──────────────────────────────────────────────────────── */
+.atf-cat-pills {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.atf-cat-pill {
+    padding:       0.65rem 0.25rem;
+    border-radius: 10px;
+    border:        1px solid rgba(255, 255, 255, 0.08);
+    background:    rgba(255, 255, 255, 0.03);
+    color:         var(--text-muted);
+    cursor:        pointer;
+    font-size:     0.72rem;
+    font-weight:   700;
+    letter-spacing: 0.05em;
+    text-align:    center;
+    transition:    all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.atf-cat-pill:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-secondary);
+}
+
+/* Active per category — distinct branded colors */
+.atf-cat-active-retail {
+    border-color: var(--cat-retail) !important;
+    background:   var(--cat-retail-dim) !important;
+    color:        #a5b4fc !important;
+    box-shadow:   0 0 12px var(--cat-retail-glow);
+}
+
+.atf-cat-active-bullion {
+    border-color: var(--cat-bullion) !important;
+    background:   var(--cat-bullion-dim) !important;
+    color:        #fcd34d !important;
+    box-shadow:   0 0 12px var(--cat-bullion-glow);
+}
+
+.atf-cat-active-silver {
+    border-color: var(--cat-silver) !important;
+    background:   var(--cat-silver-dim) !important;
+    color:        #e2e8f0 !important;
+    box-shadow:   0 0 12px var(--cat-silver-glow);
+}
+
+.atf-cat-active-chit {
+    border-color: var(--cat-chit) !important;
+    background:   var(--cat-chit-dim) !important;
+    color:        #6ee7b7 !important;
+    box-shadow:   0 0 12px var(--cat-chit-glow);
+}
+
+/* ── Sub-type pills ──────────────────────────────────────────────────────── */
+.atf-sub-pills {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.atf-sub-pill {
+    padding:       0.4rem 0.9rem;
+    border-radius: 20px;
+    border:        1px solid rgba(255, 255, 255, 0.08);
+    background:    rgba(255, 255, 255, 0.03);
+    color:         var(--text-muted);
+    cursor:        pointer;
+    font-size:     0.76rem;
+    font-weight:   600;
+    letter-spacing: 0.04em;
+    transition:    all 0.18s;
+    white-space:   nowrap;
+}
+
+.atf-sub-pill:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-primary);
+}
+
+.atf-sub-active {
+    background:   rgba(99, 102, 241, 0.18) !important;
+    border-color: var(--cat-retail) !important;
+    color:        #a5b4fc !important;
+}
+
+/* ── Chit scheme pills ───────────────────────────────────────────────────── */
+.atf-scheme-pills {
+    display:    flex;
+    flex-wrap:  wrap;
+    gap:        0.4rem;
+    margin-top: 0.1rem;
+}
+
+.atf-scheme-pill {
+    padding:       0.45rem 0.85rem;
+    border-radius: 20px;
+    border:        1px solid rgba(255, 255, 255, 0.1);
+    background:    rgba(255, 255, 255, 0.03);
+    color:         var(--text-muted);
+    cursor:        pointer;
+    font-size:     0.78rem;
+    font-weight:   600;
+    letter-spacing: 0.03em;
+    transition:    all 0.18s;
+    white-space:   nowrap;
+}
+
+.atf-scheme-pill:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-primary);
+}
+
+.atf-scheme-pill-active {
+    background:   var(--cat-chit-dim) !important;
+    border-color: var(--cat-chit) !important;
+    color:        #6ee7b7 !important;
+}
+
+/* ── Balance bar ─────────────────────────────────────────────────────────── */
+.atf-balance-bar {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    gap:             0.5rem;
+    padding:         1rem 1.2rem;
+    background:      rgba(0, 0, 0, 0.3);
+    border:          1px solid rgba(255, 255, 255, 0.07);
+    border-radius:   12px;
+}
+
+.atf-delta-col {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            4px;
+    flex-shrink:    0;
+}
+
+.atf-delta {
+    font-size:     0.68rem;
+    font-weight:   700;
+    padding:       3px 8px;
+    border-radius: 6px;
+    white-space:   nowrap;
+}
+
+.atf-delta-up {
+    background: rgba(34, 197, 94, 0.18);
+    color:      #22c55e;
+}
+
+.atf-delta-down {
+    background: rgba(244, 63, 94, 0.18);
+    color:      #f43f5e;
+}
+
+.atf-bal-box {
+    display:        flex;
+    flex-direction: column;
+    gap:            4px;
+    flex:           1;
+}
+
+.atf-bal-right {
+    text-align:  right;
+    align-items: flex-end;
+}
+
+.atf-bal-label {
+    font-size:      0.6rem;
+    font-weight:    700;
+    color:          var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+}
+
+.atf-bal-val {
+    font-size:   1.05rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+}
+
+.atf-new-bal {
+    font-size:   1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+/* ── Amount inputs with unit badges ─────────────────────────────────────── */
+.atf-input-unit {
+    display:       flex;
+    align-items:   stretch;
+    background:    rgba(255, 255, 255, 0.04);
+    border:        1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 10px;
+    overflow:      hidden;
+    transition:    border-color 0.2s, box-shadow 0.2s;
+}
+
+.atf-input-unit:focus-within {
+    border-color: var(--accent-blue);
+    box-shadow:   0 0 0 2px rgba(59, 130, 246, 0.18);
+}
+
+.atf-input-unit input {
+    background: transparent;
+    border:     none;
+    color:      var(--text-primary);
+    padding:    0.85rem 0.75rem;
+    font-size:  1.05rem;
+    font-weight: 600;
+    outline:    none;
+    flex:       1;
+    min-width:  0;
+    font-family: var(--font-main);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Remove browser number input arrows */
+.atf-input-unit input[type="number"]::-webkit-inner-spin-button,
+.atf-input-unit input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.atf-input-unit input[type="number"] { -moz-appearance: textfield; }
+
+.atf-unit-badge {
+    display:     flex;
+    align-items: center;
+    padding:     0 0.85rem;
+    font-size:   0.9rem;
+    font-weight: 800;
+    background:  rgba(255, 255, 255, 0.03);
+    user-select: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+}
+
+/* ₹ prefix — left */
+.atf-badge-rs {
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    color:  #22c55e;
+    order:  -1;
+}
+
+/* g suffix — right */
+.atf-badge-g {
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+    color: #f59e0b;
+    order: 2;
+}
+
+/* ── Styled select ───────────────────────────────────────────────────────── */
+.atf-select {
+    width:         100%;
+    padding:       0.8rem;
+    background:    rgba(255, 255, 255, 0.04);
+    border:        1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 10px;
+    color:         var(--text-primary);
+    font-size:     0.95rem;
+    font-family:   var(--font-main);
+    outline:       none;
+    cursor:        pointer;
+    transition:    border-color 0.2s;
+    appearance:    none;
+}
+
+.atf-select:focus {
+    border-color: var(--accent-blue);
+    box-shadow:   0 0 0 2px rgba(59, 130, 246, 0.18);
+}

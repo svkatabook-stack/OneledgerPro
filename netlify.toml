@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Configure new service credentials in Netlify, never in this file.
+# The app defaults to local mode until integrations are deliberately enabled.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

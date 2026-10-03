@@ -1,0 +1,231 @@
+/* ModuleForms.css - Shared layout for Retail, Bullion, Silver, Chit */
+
+.module-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+}
+
+.module-form-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.module-header {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--bg-primary);
+}
+
+.module-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* Specific Header Backgrounds */
+.bg-retail {
+    background: var(--accent-blue);
+}
+
+.border-retail {
+    border-top: 4px solid var(--accent-blue);
+}
+
+.highlight-retail {
+    color: var(--accent-blue);
+}
+
+.bg-bullion {
+    background: var(--accent-gold);
+}
+
+.border-bullion {
+    border-top: 4px solid var(--accent-gold);
+}
+
+.highlight-bullion {
+    color: var(--accent-gold);
+}
+
+.bg-silver {
+    background: var(--text-primary);
+    color: var(--bg-primary) !important;
+}
+
+.border-silver {
+    border-top: 4px solid var(--text-primary);
+}
+
+.highlight-silver {
+    color: var(--text-primary);
+}
+
+.bg-chit {
+    background: var(--accent-copper);
+}
+
+.border-chit {
+    border-top: 4px solid var(--accent-copper);
+}
+
+.highlight-chit {
+    color: var(--accent-copper);
+}
+
+/* Form Layout */
+.form-content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.customer-section {
+    background: rgba(15, 23, 42, 0.4);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px dashed var(--glass-border);
+}
+
+.name-display {
+    margin-top: 1rem;
+}
+
+.name-box {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+}
+
+.details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.grid-2-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.total-section {
+    margin-top: 1rem;
+    background: rgba(30, 41, 59, 0.6);
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--glass-border);
+}
+
+.total-section h3 {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.total-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
+}
+
+/* ─── JAMA / NAVE dual-column entry sections ─── */
+.jn-section {
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 1rem 1rem 0.75rem;
+}
+
+.jn-section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.625rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.jn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem;
+}
+
+/* Running balance strip */
+.balance-strip {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: wrap;
+}
+
+.balance-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+}
+
+.balance-chip-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.balance-chip-value {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.bal-cash   { color: var(--accent-green); }
+.bal-gold   { color: var(--accent-gold); }
+.bal-silver { color: #c0c0c0; }
+.bal-zero   { color: var(--text-muted); }
+
+/* Ledger table compact */
+.ledger-table-container {
+    overflow-x: auto;
+    margin-top: 0.5rem;
+    border-radius: 10px;
+}
+
+.ledger-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.tag-jama { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+.tag-nave { background: rgba(16,185,129,0.15);   color: #6ee7b7; }
+
+.font-bold { font-weight: 700; }
+.ledger-summary { margin-top: 1rem; }

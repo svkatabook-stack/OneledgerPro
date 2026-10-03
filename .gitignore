@@ -1,0 +1,28 @@
+# Local env — never commit real credentials
+.env
+.env.local
+.env.*.local
+
+# Claude local settings
+.claude/settings.local.json
+
+# Build output
+dist/
+dist-ssr/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local test artifacts and automation state
+playwright-report/
+test-results/
+.claude/

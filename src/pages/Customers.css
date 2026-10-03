@@ -1,0 +1,348 @@
+/* Customers.css */
+
+.customers-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Page Header */
+.cust-page-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0 1.25rem;
+}
+
+.cust-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.cust-back-btn:hover {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.35);
+    color: #a5b4fc;
+}
+
+/* Form Card — mirrors popup-content style */
+.cust-form-card {
+    background: var(--bg-dark, #0f172a);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.cust-form-title {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cust-form-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Error text */
+.cust-error {
+    font-size: 0.72rem;
+    color: #ef4444;
+    margin-top: 2px;
+}
+
+/* Form footer Save button row */
+.cust-form-footer {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Customer list item — NOT clickable, only the edit button is */
+.cust-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: default;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+/* Category badges on list items */
+.cust-cat-badge {
+    font-size: 0.62rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.cust-cat-retail {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.cust-cat-bullion {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+}
+
+/* Input fields scoped to cust-form-body */
+.cust-form-body .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.cust-form-body .form-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.cust-form-body .form-group input[type="text"],
+.cust-form-body .form-group input[type="tel"],
+.cust-form-body .form-group input[type="number"],
+.cust-form-body .form-group input[type="date"] {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.cust-form-body .form-group input:focus {
+    border-color: var(--accent-blue, #3b82f6);
+}
+
+/* Amount input with unit prefix/suffix */
+.amount-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.amount-input-wrap input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.unit-prefix {
+    position: absolute;
+    left: 0.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #10b981;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.unit-suffix {
+    position: absolute;
+    right: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #eab308;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Export button in header */
+.cust-export-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    color: #10b981;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.cust-export-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+/* Edit (pencil) button on each list row */
+.cust-edit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.cust-edit-btn:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #3b82f6;
+}
+
+/* (cursor already set above) */
+
+.mt-4 { margin-top: 1rem; }
+
+/* ── Edit Modal Fields ──────────────────────────────────────── */
+.edit-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.edit-field-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+}
+
+.edit-field-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: var(--font-main);
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.edit-field-input:focus {
+    border-color: rgba(99, 102, 241, 0.6);
+    background: rgba(99, 102, 241, 0.06);
+}
+
+.edit-field-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* ── Search bar ─────────────────────────────────────────────── */
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: border-color 0.2s;
+}
+
+.search-bar:focus-within {
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.search-bar input {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    width: 100%;
+    outline: none;
+    font-size: 0.95rem;
+    font-family: var(--font-main);
+}
+
+.search-bar input::placeholder {
+    color: var(--text-muted);
+}
+
+/* ── Save / Cancel buttons ──────────────────────────────────── */
+.btn-save {
+    flex: 1;
+    padding: 0.875rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-main);
+    background: linear-gradient(135deg, var(--cat-retail), #4f46e5);
+    color: white;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+    transition: all 0.2s;
+}
+
+.btn-save:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(99, 102, 241, 0.5);
+}
+
+.btn-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 0.875rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-main);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.09);
+}
