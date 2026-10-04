@@ -8,13 +8,6 @@ import { supabase, isSupabaseReady } from '../lib/supabase';
 import { Database, Trash2, ArrowLeft, KeyRound, Eye, EyeOff, Download, HardDrive } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-const hashPassword = async (text) => {
-    const msgUint8 = new TextEncoder().encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
 const ROLE_LABELS = { owner: 'Owner', staff: 'Staff', view: 'View' };
 
 const Settings = () => {
@@ -30,6 +23,8 @@ const Settings = () => {
     // Passcode management state
     const [editingRole, setEditingRole] = useState(null); // 'owner' | 'staff' | 'view' | null
     const [newPasscode, setNewPasscode] = useState('');
+    const [ownerPassword, setOwnerPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [showNewPass, setShowNewPass] = useState(false);
     const [savingPasscode, setSavingPasscode] = useState(false);
 
@@ -191,35 +186,30 @@ const Settings = () => {
 
     const handlePasscodeEdit = (role) => {
         setEditingRole(role);
-        setNewPasscode('');
+        setNewPasscode(''); setOwnerPassword(''); setConfirmPassword('');
         setShowNewPass(false);
     };
 
     const handlePasscodeCancel = () => {
         setEditingRole(null);
-        setNewPasscode('');
+        setNewPasscode(''); setOwnerPassword(''); setConfirmPassword('');
     };
 
     const handlePasscodeSave = async (role) => {
-        if (newPasscode.length < 4) {
-            toast.error('Passcode must be at least 4 characters.');
+        if (newPasscode.length < 6 || newPasscode !== confirmPassword || !ownerPassword) {
+            toast.error('Enter your current Owner password and matching new passwords (at least 6 characters).');
             return;
         }
-        if (!isSupabaseReady() || !orgId) {
-            toast.error('Supabase not connected. Cannot save passcode.');
-            return;
-        }
+        if (!isSupabaseReady() || !orgId) return;
         setSavingPasscode(true);
         try {
-            const hash = await hashPassword(newPasscode);
-            const { error } = await supabase
-                .from('organizations')
-                .update({ [`passcode_${role}_hash`]: hash })
-                .eq('id', orgId);
-            if (error) throw error;
+            const { data, error } = await supabase.functions.invoke('role-password', {
+                body: { role, password: newPasscode, ownerPassword },
+            });
+            if (error || !data?.ok) throw new Error(data?.error || 'Password was not changed. Check your current Owner password and try again.');
             toast.success(`${ROLE_LABELS[role]} passcode updated.`);
             setEditingRole(null);
-            setNewPasscode('');
+            setNewPasscode(''); setOwnerPassword(''); setConfirmPassword('');
         } catch (err) {
             toast.error('Failed to save: ' + err.message);
         } finally {
@@ -252,9 +242,9 @@ const Settings = () => {
                     </div>}
 
                     {!isLocalMode && <div>
-                        <h3>Cloud account</h3>
-                        <p style={{ marginTop: 8 }}>{authSession?.email}</p>
-                        <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>Passwords and team access are managed through Supabase Authentication. Report delivery uses the server-side email configuration.</p>
+                        <h3>Cloud access</h3>
+                        <p style={{ marginTop: 8 }}>{ROLE_LABELS[authSession?.role]}</p>
+                        <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>The Owner manages role passwords below. Each role keeps its permitted database access.</p>
                     </div>}
                     {/* Export All Data */}
                     {isOwner && (
@@ -278,13 +268,13 @@ const Settings = () => {
                     )}
 
                     {/* Legacy local passcode controls */}
-                    {isOwner && isLocalMode && (
+                    {isOwner && !isLocalMode && (
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
                             <h3 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <KeyRound size={16} /> Access Passcodes
                             </h3>
                             <p style={{ marginBottom: '1.25rem', fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                                Change the login passcode for each role. Staff will need to use the new passcode immediately after saving.
+                                Change the login passcode for each role. The new password applies to future sign-ins. Already signed-in devices may remain active until their session expires.
                             </p>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -316,13 +306,15 @@ const Settings = () => {
                                         </div>
 
                                         {editingRole === role && (
-                                            <div style={{ marginTop: '0.5rem', padding: '0.875rem', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '10px', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                                            <div style={{ marginTop: '0.5rem', padding: '0.875rem', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.6rem', alignItems: 'stretch' }}>
+                                                <input type="password" aria-label="Current Owner password" placeholder="Current Owner password" autoComplete="current-password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} disabled={savingPasscode} />
+                                                <input type="password" aria-label="Confirm new password" placeholder="Confirm new password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={savingPasscode} />
                                                 <div style={{ flex: 1, position: 'relative' }}>
                                                     <input
                                                         type={showNewPass ? 'text' : 'password'}
                                                         value={newPasscode}
                                                         onChange={e => setNewPasscode(e.target.value)}
-                                                        placeholder="New passcode (min 4 chars)"
+                                                        placeholder="New passcode (min 6 chars)"
                                                         autoFocus
                                                         style={{
                                                             width: '100%', padding: '0.55rem 2.2rem 0.55rem 0.75rem',
@@ -338,13 +330,13 @@ const Settings = () => {
                                                 </div>
                                                 <button
                                                     onClick={() => handlePasscodeSave(role)}
-                                                    disabled={savingPasscode || newPasscode.length < 4}
+                                                    disabled={savingPasscode || newPasscode.length < 6 || newPasscode !== confirmPassword || !ownerPassword}
                                                     style={{
                                                         padding: '0.55rem 1rem',
-                                                        background: newPasscode.length >= 4 ? 'var(--accent-blue, #3b82f6)' : 'rgba(59,130,246,0.2)',
+                                                        background: newPasscode.length >= 6 ? 'var(--accent-blue, #3b82f6)' : 'rgba(59,130,246,0.2)',
                                                         border: 'none', borderRadius: '7px',
-                                                        color: newPasscode.length >= 4 ? '#fff' : 'rgba(59,130,246,0.5)',
-                                                        cursor: newPasscode.length >= 4 ? 'pointer' : 'not-allowed',
+                                                        color: newPasscode.length >= 6 ? '#fff' : 'rgba(59,130,246,0.5)',
+                                                        cursor: newPasscode.length >= 6 ? 'pointer' : 'not-allowed',
                                                         fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap',
                                                     }}
                                                 >

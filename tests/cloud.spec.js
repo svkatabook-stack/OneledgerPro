@@ -3,13 +3,13 @@ const userId='10000000-0000-0000-0000-000000000001';
 const orgId='20000000-0000-0000-0000-000000000001';
 const customerId='30000000-0000-0000-0000-000000000001';
 async function mockCloud(page, linked = true, role='owner') {
- const state={txs:[], balance:0, fail:false, ids:[], tokenRequests:0};
+ const state={txs:[], balance:0, fail:false, ids:[], tokenRequests:0, loginEmails:[]};
  const user={id:userId,email:'s.vkatabook@gmail.com',aud:'authenticated',role:'authenticated',app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-03T00:00:00Z'};
  const jwt=[{alg:'HS256',typ:'JWT'},{sub:userId,exp:Math.floor(Date.now()/1000)+3600,aud:'authenticated'},'signature'].map(v=>Buffer.from(typeof v==='string'?v:JSON.stringify(v)).toString('base64url')).join('.');
  await page.route('http://127.0.0.1:54399/**',async route=>{
   const req=route.request(); const url=new URL(req.url());
   const respond=(body,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
-  if (url.pathname==='/auth/v1/token') { state.tokenRequests++; return respond({access_token:jwt,refresh_token:'test-refresh',expires_in:3600,token_type:'bearer',user}); }
+  if (url.pathname==='/auth/v1/token') { state.tokenRequests++; state.loginEmails.push(req.postDataJSON().email); return respond({access_token:jwt,refresh_token:'test-refresh',expires_in:3600,token_type:'bearer',user}); }
   if (url.pathname==='/auth/v1/user') return respond(user);
   if (url.pathname==='/auth/v1/logout') return respond({});
   if (url.pathname==='/rest/v1/profiles') {
@@ -30,9 +30,9 @@ async function mockCloud(page, linked = true, role='owner') {
  });
  return state;
 }
-async function login(page) {
+async function login(page, role='Owner') {
  await page.goto('/');
- await page.getByLabel('Email').fill('s.vkatabook@gmail.com');
+ await page.getByRole('button',{name:new RegExp(role)}).click();
  await page.getByPlaceholder('Password',{exact:true}).fill('test-only-password');
  await page.getByRole('button',{name:'Sign In',exact:true}).click();
 }
@@ -61,7 +61,7 @@ test('cloud ignores forged demo session; failed writes stay unsaved and retry us
  expect(state.ids[0]).toBe(state.ids[1]);
  expect(state.balance).toBe(100);
  await page.goto('/settings');
- await expect(page.getByText('Cloud account',{exact:true})).toBeVisible();
+ await expect(page.getByText('Cloud access',{exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Load Dummy Data'})).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Clear All Data'})).toHaveCount(0);
  expect(state.tokenRequests).toBe(1);
@@ -72,8 +72,24 @@ test('unlinked authenticated user cannot enter ledger',async({page})=>{
  await expect(page.locator('.app-header')).toHaveCount(0);
 });
 test('view role cannot enter transaction form',async({page})=>{
- await mockCloud(page,true,'view'); await login(page);
+ const state=await mockCloud(page,true,'view'); await login(page,'View');
+ expect(state.loginEmails).toEqual(['oneledger-view@accounts.invalid']);
  await expect(page.locator('.app-header')).toBeVisible();
  await page.goto('/transactions');
  await expect(page.getByText('Your account has read-only access.')).toBeVisible();
+});
+
+test('owner settings submit password changes only after matching confirmation',async({page})=>{
+ await mockCloud(page); let submitted;
+ await page.route('**/functions/v1/role-password',async route=>{submitted=route.request().postDataJSON(); await route.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'});});
+ await login(page); await expect(page.locator('.app-header')).toBeVisible();
+ await page.goto('/settings');
+ await page.getByRole('button',{name:'Change',exact:true}).nth(1).click();
+ await page.getByLabel('Current Owner password').fill('current-owner-test');
+ await page.getByPlaceholder('New passcode (min 6 chars)').fill('new-staff-test');
+ await expect(page.getByRole('button',{name:'Save',exact:true})).toBeDisabled();
+ await page.getByLabel('Confirm new password').fill('new-staff-test');
+ await page.getByRole('button',{name:'Save',exact:true}).click();
+ await expect(page.getByText('Staff passcode updated.')).toBeVisible();
+ expect(submitted).toEqual({role:'staff',password:'new-staff-test',ownerPassword:'current-owner-test'});
 });

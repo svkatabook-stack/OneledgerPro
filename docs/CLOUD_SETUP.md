@@ -22,7 +22,7 @@ In Supabase → Authentication → Users → Add user → Create user:
 
 Then run `supabase/seed.sql` in SQL Editor. It links only that confirmed user to the OneLedger organization as Owner and creates the five default Chit schemes. The script does not set any password. Keep organization/role administration restricted to the administrator dashboard for now.
 
-The cloud login uses Supabase email/password authentication. There are no shared role passwords and no localStorage fallback granting cloud access. Local demo records are separate and are not migrated automatically.
+The cloud login presents Owner, Staff, and View buttons. Each role uses a separate shared password verified by Supabase Auth; account identifiers are internal to the application. There is no localStorage fallback granting cloud access. Local demo records are separate and are not migrated automatically.
 
 ## 3. Netlify
 
@@ -86,3 +86,13 @@ SMTP for scheduled reports and Supabase Auth email are separate configurations. 
 - Report-period tests cover IST/year boundaries and seven-day weekly coverage.
 
 These checks do not substitute for verifying live owner sign-in and actual SMTP delivery after secrets and deployment are configured.
+
+## Shared role password handover
+
+Deploy `supabase/functions/role-password/index.ts` as `role-password`. Its handler verifies the bearer token, the database Owner role and organization, the configured owner identity, and the current Owner password before any account mutation. The config disables the legacy JWT gateway because verification occurs in the handler. Never deploy a version without these checks.
+
+Owner login uses the existing owner account password until changed. In Owner Settings → Access Passcodes, enter the current Owner password, the new role password, and its confirmation. Saving Staff or View provisions that shared role account if absent. Provision Staff and View first, then change Owner. Passwords are never embedded in the frontend or committed to source. Initial handover values are entered by the administrator directly in the UI.
+
+The shared identities are `oneledger-staff@accounts.invalid` and `oneledger-view@accounts.invalid`; these are internal identifiers, not email delivery addresses. Everyone using a role shares its audit identity. Password changes affect future sign-ins; existing sessions are not immediately revoked and may remain active until session expiry. This is a single-organization setup.
+
+Validation: four mocked cloud browser tests and five server authorization tests cover the role UI, owner password submission, unlinked-user denial, anonymous/Staff denial, Owner reauthentication, and fixed target identity. Real password provisioning and live role sign-in still require administrator completion.

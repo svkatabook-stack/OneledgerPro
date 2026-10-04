@@ -66,7 +66,7 @@ npm run test:reports # Report calendar-period checks
 | Cloudflare | Images/storage | Adapter not implemented; local photos work |
 | Gmail | Send alerts from `s.vkatabook@gmail.com` | Not connected; recipient: `s.vkatabook@gmail.com` |
 
-`VITE_APP_MODE` defaults to `local`. Switch to `cloud` only after applying the new schema and creating/linking the owner as described in [Cloud setup](docs/CLOUD_SETUP.md). The old deployment's account credentials, project identifiers, upload settings, customer-specific dashboard accounts, and Git history were not imported. There are no shared cloud passwords in this version.
+`VITE_APP_MODE` defaults to `local`. Switch to `cloud` only after applying the new schema and creating/linking the owner as described in [Cloud setup](docs/CLOUD_SETUP.md). The old deployment's account credentials, project identifiers, upload settings, customer-specific dashboard accounts, and Git history were not imported. Cloud access uses shared Owner, Staff, and View passwords managed by the Owner; see the setup guide for provisioning.
 
 The previous Cloudinary adapter remains in source for reference but is bypassed in local mode. Cloudinary and Cloudflare are different services; creating a Cloudflare account does not activate that adapter.
 
