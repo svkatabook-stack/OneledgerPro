@@ -97,12 +97,10 @@ The shared identities are `oneledger-staff@accounts.invalid` and `oneledger-view
 
 Validation: four mocked cloud browser tests and five server authorization tests cover the role UI, owner password submission, unlinked-user denial, anonymous/Staff denial, Owner reauthentication, and fixed target identity. Real password provisioning and live role sign-in still require administrator completion.
 
-## Cloudinary account (2026-10-06)
+## Cloudinary receipt storage (2026-10-06)
 
-Cloudinary replaces the previously planned Cloudflare integration. Cloud name: `bowzvcvg`. Supplied preset: `ml_default`.
-
-Verified in the Cloudinary dashboard: `ml_default` is **Signed**, uses filenames, disables unique filenames, and permits overwrite. The existing browser adapter sends unsigned uploads, so it is not compatible with this preset yet. Do not activate these values in Netlify until the upload approach is resolved. Keep the existing default preset unchanged.
-
-Pending choice: add authenticated server-side signing (API secret stays in server secrets), or create a dedicated unsigned preset for the existing adapter. Receipt uploads should use unique names to avoid overwriting earlier images. No image upload has been tested against this account and no Cloudinary API secret has been supplied.
-
-All integration work remains on `fix/role-login-cloudflare` despite its historical name. Development pushes skip Netlify deployments.
+Private, server-signed receipt upload support is implemented on the feature branch.
+Cloud `bowzvcvg` uses the dedicated Signed/authenticated preset `oneledger_receipts`.
+The existing `ml_default` preset is unchanged. API credentials and a real upload
+verification are still required before deploying this frontend change.
+See [Cloudinary setup](CLOUDINARY_SETUP.md) for the exact secret names and steps.

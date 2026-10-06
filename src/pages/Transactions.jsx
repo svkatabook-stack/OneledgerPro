@@ -1,3 +1,4 @@
+import ReceiptImage from '../components/ReceiptImage';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
@@ -1031,7 +1032,7 @@ const Transactions = () => {
                     <button onClick={() => setLightboxImages(null)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: 36, height: 36, fontSize: '1.1rem', cursor: 'pointer' }}>✕</button>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                         {lightboxImages.map((img, i) => (
-                            <img key={i} src={img.url} alt={`receipt-${i+1}`} style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '10px', objectFit: 'contain', boxShadow: '0 4px 32px rgba(0,0,0,0.6)' }} />
+                            <ReceiptImage key={i} image={img} alt={`receipt-${i+1}`} style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '10px', objectFit: 'contain', boxShadow: '0 4px 32px rgba(0,0,0,0.6)' }} />
                         ))}
                     </div>
                 </div>

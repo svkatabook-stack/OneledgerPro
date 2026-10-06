@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { AppContext, dbCustToLocal, dbTxToLocal } from './AppContext';
 import { supabase, isSupabaseReady } from '../lib/supabase';
 
+import { receiptReferences, clearReceiptCache } from '../lib/receiptImages';
+
 // Cloud data never reads or writes the local demo cache.
 async function allRows(table, orgId) {
     const rows = [];
@@ -29,6 +31,7 @@ export const CloudAppProvider = ({ children }) => {
     const loadVersion = useRef(0);
 
     const clearData = useCallback(() => {
+        clearReceiptCache();
         loadVersion.current++;
         setCustomers([]); setTransactions([]); setDeletedTransactions([]); setChitSchemes([]);
         setSyncError(''); setIsLive(false);
@@ -142,7 +145,7 @@ export const CloudAppProvider = ({ children }) => {
     };
     const addTransaction = async data => {
         writer();
-        const { data: row, error } = await supabase.rpc('record_transaction', { p_id: data.id || crypto.randomUUID(), p_entry: data });
+        const { data: row, error } = await supabase.rpc('record_transaction', { p_id: data.id || crypto.randomUUID(), p_entry: { ...data, images: receiptReferences(data.images) } });
         if (error) throw error;
         await refresh();
         return dbTxToLocal(row);

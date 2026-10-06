@@ -1,3 +1,5 @@
+import { resolveReceiptUrl } from '../lib/receiptImages';
+import ReceiptImage from './ReceiptImage';
 import React, { useRef, useState } from 'react';
 
 const fmt = (v) => parseFloat(v || 0).toFixed(2);
@@ -45,7 +47,7 @@ const ReceiptModal = ({ transaction, customer, onClose }) => {
             const shareData = { title: 'OneLedger Pro Receipt', text: msg };
             if (transaction.images?.length > 0) {
                 try {
-                    const resp = await fetch(transaction.images[0].url);
+                    const resp = await fetch(await resolveReceiptUrl(transaction.images[0]));
                     const blob = await resp.blob();
                     const file = new File([blob], 'receipt.jpg', { type: blob.type });
                     if (navigator.canShare?.({ files: [file] })) shareData.files = [file];
@@ -193,8 +195,8 @@ const ReceiptModal = ({ transaction, customer, onClose }) => {
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Receipt Photo{transaction.images.length > 1 ? 's' : ''}</div>
                                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                     {transaction.images.map((img, i) => (
-                                        <img key={i} src={img.url} alt={`receipt-${i+1}`}
-                                            onClick={() => setLightboxImg(img.url)}
+                                        <ReceiptImage key={i} image={img} alt={`receipt-${i+1}`}
+                                            onClick={() => setLightboxImg(img)}
                                             style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: '8px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.12)' }} />
                                     ))}
                                 </div>
@@ -213,7 +215,7 @@ const ReceiptModal = ({ transaction, customer, onClose }) => {
                     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}
                         onClick={() => setLightboxImg(null)}>
                         <button onClick={() => setLightboxImg(null)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: 36, height: 36, fontSize: '1.1rem', cursor: 'pointer' }}>✕</button>
-                        <img src={lightboxImg} alt="receipt" style={{ maxWidth: '92vw', maxHeight: '88vh', borderRadius: '10px', objectFit: 'contain' }} onClick={e => e.stopPropagation()} />
+                        <ReceiptImage image={lightboxImg} alt="receipt" style={{ maxWidth: '92vw', maxHeight: '88vh', borderRadius: '10px', objectFit: 'contain' }} onClick={e => e.stopPropagation()} />
                     </div>
                 )}
 

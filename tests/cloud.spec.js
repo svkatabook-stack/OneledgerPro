@@ -23,7 +23,7 @@ async function mockCloud(page, linked = true, role='owner') {
    const payload=req.postDataJSON(); state.ids.push(payload.p_id);
    if(state.fail) return respond({message:'Database unavailable',code:'XX000'},500);
    const p=payload.p_entry; state.balance+=p.jama-p.nave;
-   const row={id:payload.p_id,org_id:orgId,customer_id:p.customerId,category:p.category,sub_type:p.sub_type,type:p.type,direction:'IN',jama:p.jama,nave:p.nave,date:p.date,time:p.time,current_balance:0,new_balance:state.balance,created_at:new Date().toISOString(),images:[]};
+   const row={id:payload.p_id,org_id:orgId,customer_id:p.customerId,category:p.category,sub_type:p.sub_type,type:p.type,direction:'IN',jama:p.jama,nave:p.nave,date:p.date,time:p.time,current_balance:0,new_balance:state.balance,created_at:new Date().toISOString(),images:p.images||[]};
    state.txs.push(row); return respond(row);
   }
   return respond({message:'Unexpected mock endpoint'},404);
@@ -92,4 +92,28 @@ test('owner settings submit password changes only after matching confirmation',a
  await page.getByRole('button',{name:'Save',exact:true}).click();
  await expect(page.getByText('Staff passcode updated.')).toBeVisible();
  expect(submitted).toEqual({role:'staff',password:'new-staff-test',ownerPassword:'current-owner-test'});
+});
+
+test('cloud receipt upload persists only the reference and resolves again after reload',async({page})=>{
+ const state=await mockCloud(page);
+ const id='oneledger/'+orgId+'/'+userId+'/40000000-0000-4000-8000-000000000001';
+ const photo={id,provider:'cloudinary',format:'webp',name:'receipt.webp',size:100};
+ let reads=0,uploads=0;
+ await page.route('**/functions/v1/receipt-images?*',async route=>{
+  if(new URL(route.request().url()).searchParams.get('action')==='upload') {uploads++; return route.fulfill({contentType:'application/json',body:JSON.stringify({image:photo})});}
+  reads++; return route.fulfill({contentType:'application/json',body:JSON.stringify({url:'https://api.cloudinary.com/test/receipt.png',expiresAt:Date.now()+300000})});
+ });
+ await page.route('https://api.cloudinary.com/test/receipt.png',route=>route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')}));
+ await login(page); await expect(page.locator('.app-header')).toBeVisible();
+ await page.goto('/transactions'); await page.locator('.atp-cat-name').filter({hasText:/^Retail$/}).click();
+ await page.locator('.atp-cust-row').click(); await page.locator('.atp-amount-input').fill('10');
+ await page.locator('input[type=file]').setInputFiles({name:'receipt.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});
+ await expect(page.getByAltText('receipt',{exact:true}).first()).toBeVisible();
+ await page.getByRole('button',{name:'Save Transaction',exact:true}).click();
+ await expect(page.locator('.popup-overlay')).toBeVisible();
+ expect(uploads).toBe(1); expect(state.txs[0].images).toEqual([photo]);
+ await page.goto('/customers/'+customerId);
+ await page.locator('tbody tr').first().click();
+ await expect(page.getByAltText('Receipt 1',{exact:true})).toBeVisible();
+ expect(reads).toBeGreaterThanOrEqual(2);
 });

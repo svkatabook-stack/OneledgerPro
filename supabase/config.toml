@@ -7,3 +7,7 @@ verify_jwt = false
 # Handler verifies the access token, database Owner role, and current Owner password.
 [functions.role-password]
 verify_jwt = false
+
+# Handler validates Auth and uses caller-scoped RLS reads.
+[functions.receipt-images]
+verify_jwt = false

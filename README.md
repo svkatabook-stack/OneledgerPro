@@ -68,7 +68,7 @@ npm run test:reports # Report calendar-period checks
 
 `VITE_APP_MODE` defaults to `local`. Switch to `cloud` only after applying the new schema and creating/linking the owner as described in [Cloud setup](docs/CLOUD_SETUP.md). The old deployment's account credentials, project identifiers, upload settings, customer-specific dashboard accounts, and Git history were not imported. Cloud access uses shared Owner, Staff, and View passwords managed by the Owner; see the setup guide for provisioning.
 
-The previous Cloudinary adapter remains in source for reference but is bypassed in local mode. Cloudinary and Cloudflare are different services; creating a Cloudflare account does not activate that adapter.
+Cloud mode uses private, server-signed Cloudinary receipt uploads. Local mode keeps photos in browser storage. See [Cloudinary setup](docs/CLOUDINARY_SETUP.md) for credentials and activation.
 
 See [HANDOVER.md](HANDOVER.md) for the setup checklist and [docs/BASELINE.md](docs/BASELINE.md) for the boundary of this import and deferred work.
 

@@ -1,3 +1,4 @@
+import ReceiptImage from '../components/ReceiptImage';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
@@ -169,9 +170,9 @@ const WorkingPage = () => {
                             <div style={{ marginTop: '1rem' }}>
                                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Receipt Photos</p>
                                 {selectedTx.images.map((img, i) => (
-                                    <a key={i} href={img.url} target="_blank" rel="noopener noreferrer">
-                                        <img src={img.url} alt={`Receipt ${i + 1}`} style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
-                                    </a>
+                                    <div key={i}>
+                                        <ReceiptImage image={img} alt={`Receipt ${i + 1}`} style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                    </div>
                                 ))}
                             </div>
                         )}
