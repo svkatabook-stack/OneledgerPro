@@ -6,7 +6,7 @@ See [Cloud setup](docs/CLOUD_SETUP.md) for the tested database schema, owner cre
 - Owner / report sender / recipient: `s.vkatabook@gmail.com`.
 - Netlify: https://comfy-klepon-85d3fc.netlify.app (rename planned).
 - GitHub: https://github.com/svkatabook-stack/OneledgerPro.
-- Cloudflare images: not connected; the existing image adapter is still pending replacement.
+- Cloudinary images: account `bowzvcvg`, preset `ml_default` (Signed). Existing unsigned adapter needs an agreed upload approach; see Cloud setup.
 - Local mode remains available without external accounts.
 
 Never commit database passwords, Gmail app passwords, cron secrets, or service-role keys. Browser publishable keys identify the project; authorization comes from Supabase Auth and RLS.
@@ -19,4 +19,4 @@ Never commit database passwords, Gmail app passwords, cron secrets, or service-r
 - Use `[skip netlify]` on the latest commit of development pushes to suppress automatic branch builds. Branch deployments also consume build resources; enabling them is not a credit-saving mechanism by itself.
 - User will enable the chosen branch in Netlify when ready to test. Deploy deliberately after the backend and configuration are ready.
 - Role login/password-management implementation is tested but not live. Initial role passwords have not been set, and the `role-password` function is not deployed.
-- Cloudflare image implementation is pending account setup and selection/configuration of the storage service. Keep credentials out of Git.
+- Cloudinary is now the selected image service. Its supplied Signed preset needs server signing or a separate unsigned preset before activation. Keep credentials out of Git.
