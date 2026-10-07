@@ -24,7 +24,7 @@ async function mockCloud(page, linked = true, role='owner') {
    if(state.fail) return respond({message:'Database unavailable',code:'XX000'},500);
    const existing=state.txs.find(t=>t.id===payload.p_id); if(existing) return respond(existing);
    const p=payload.p_entry; state.balance+=p.jama-p.nave;
-   const row={id:payload.p_id,bill_number:'OLP-'+String(state.txs.length+1).padStart(6,'0'),org_id:orgId,customer_id:p.customerId,category:p.category,sub_type:p.sub_type,type:p.type,direction:'IN',jama:p.jama,nave:p.nave,date:p.date,time:p.time,current_balance:0,new_balance:state.balance,created_at:new Date().toISOString(),images:p.images||[]};
+   const row={id:payload.p_id,bill_number:p.bill_number || null,org_id:orgId,customer_id:p.customerId,category:p.category,sub_type:p.sub_type,type:p.type,direction:'IN',jama:p.jama,nave:p.nave,date:p.date,time:p.time,current_balance:0,new_balance:state.balance,created_at:new Date().toISOString(),images:p.images||[]};
    state.txs.push(row); if(state.commitThenFail){state.commitThenFail=false;return route.abort('failed');} return respond(row);
   }
   return respond({message:'Unexpected mock endpoint'},404);
@@ -129,17 +129,17 @@ const fixtureTx = (number, age=0, type='CASH') => ({id:crypto.randomUUID(),bill_
 
 test('bill number survives a lost response retry and filters ledger/export', async({page})=>{
  const state=await mockCloud(page); await login(page); await expect(page.locator('.app-header')).toBeVisible();
- await openEntry(page); state.commitThenFail=true;
+ await openEntry(page); await page.getByLabel('Bill Number optional').fill(' shop-001 '); state.commitThenFail=true;
  await page.getByRole('button',{name:'Save Transaction',exact:true}).click();
  await expect(page.getByText(/Transaction not confirmed/)).toBeVisible();
  await page.getByRole('button',{name:'Save Transaction',exact:true}).click();
- await expect(page.locator('.popup-overlay')).toContainText('OLP-000001');
+ await expect(page.locator('.popup-overlay')).toContainText('SHOP-001');
  expect(state.txs).toHaveLength(1); expect(state.balance).toBe(100); expect(state.ids[0]).toBe(state.ids[1]);
  state.txs.push(fixtureTx('OLP-000002',0,'GOLD'));
  await page.goto('/ledger'); await page.getByRole('button',{name:'Global',exact:true}).click();
  await page.getByLabel('Bill Number',{exact:true}).fill('olp-000002');
  await expect(page.locator('tbody')).toContainText('OLP-000002');
- await expect(page.locator('tbody')).not.toContainText('OLP-000001');
+ await expect(page.locator('tbody')).not.toContainText('SHOP-001');
  const downloadPromise=page.waitForEvent('download');
  await page.getByRole('button',{name:'Export filtered',exact:true}).click();
  const download=await downloadPromise;

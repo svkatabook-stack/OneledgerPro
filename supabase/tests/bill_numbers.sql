@@ -12,28 +12,32 @@ insert into public.customers(id,org_id,name,mobile) values
  ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','Test customer','9000000001');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000001',true);
-do $$ declare r jsonb; p jsonb := '{"customerId":"30000000-0000-0000-0000-000000000001","category":"RETAIL","type":"CASH","jama":100,"nave":0,"date":"2026-10-07","time":"12:00:00","bill_number":"CUSTOM"}'; begin
+do $$ declare r jsonb; p jsonb := '{"customerId":"30000000-0000-0000-0000-000000000001","category":"RETAIL","type":"CASH","jama":100,"nave":0,"date":"2026-10-07","time":"12:00:00","bill_number":" manual-001 "}'; begin
  r:=public.record_transaction('40000000-0000-0000-0000-000000000001',p);
- if r->>'bill_number' != 'OLP-000001' then raise exception 'Incorrect automatic bill %',r; end if;
+ if r->>'bill_number' != 'MANUAL-001' then raise exception 'Incorrect automatic bill %',r; end if;
  r:=public.record_transaction('40000000-0000-0000-0000-000000000001',p);
- if r->>'bill_number' != 'OLP-000001' then raise exception 'Retry changed bill'; end if;
+ if r->>'bill_number' != 'MANUAL-001' then raise exception 'Retry changed bill'; end if;
  perform public.delete_transaction('40000000-0000-0000-0000-000000000001');
+ begin
+  perform public.record_transaction('40000000-0000-0000-0000-000000000009',p); raise exception 'Duplicate bill allowed';
+ exception when unique_violation then null; end;
+ p:=p-'bill_number';
  r:=public.record_transaction('40000000-0000-0000-0000-000000000002',p);
- if r->>'bill_number' != 'OLP-000002' then raise exception 'Deleted bill reused'; end if;
+ if r->>'bill_number' is not null then raise exception 'Deleted bill reused'; end if;
  r:=public.record_transaction('40000000-0000-0000-0000-000000000003',p);
- if r->>'bill_number' != 'OLP-000003' then raise exception 'Counter mismatch'; end if;
+ if r->>'bill_number' is not null then raise exception 'Counter mismatch'; end if;
  begin
   perform * from private.bill_counters; raise exception 'Counter exposed';
  exception when insufficient_privilege then null; end;
 end $$;
 reset role;
-update public.transactions set created_at=now()-interval '48 hours' where bill_number='OLP-000002';
+update public.transactions set created_at=now()-interval '48 hours' where id='40000000-0000-0000-0000-000000000002';
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000002',true);
 do $$ declare r jsonb; begin
  if (select count(*) from public.transactions)!=1 then raise exception 'Staff sees old/deleted history'; end if;
  r:=public.record_transaction('40000000-0000-0000-0000-000000000004','{"customerId":"30000000-0000-0000-0000-000000000001","category":"BULLION","type":"GOLD","jama":1,"nave":0,"date":"2026-10-07","time":"12:00:00"}');
- if r->>'bill_number'!='OLP-000004' then raise exception 'Staff/category sequence mismatch'; end if;
+ if r->>'bill_number' is not null then raise exception 'Staff/category sequence mismatch'; end if;
  begin
   perform public.delete_transaction('40000000-0000-0000-0000-000000000004'); raise exception 'Staff deleted transaction';
  exception when insufficient_privilege then null; end;
@@ -51,4 +55,4 @@ do $$ begin
 end $$;
 reset role;
 rollback;
-select 'PASS: sequential bills, retries, non-reuse, staff write, role history boundaries' as result;
+select 'PASS: manual bills, optional blanks, retries, duplicate rejection, staff write, role history boundaries' as result;
