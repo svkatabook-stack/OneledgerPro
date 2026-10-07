@@ -57,14 +57,6 @@ export const AppProvider = ({ children }) => {
     useEffect(() => { localStorage.setItem('oneledger_auth',                 JSON.stringify(authSession));         }, [authSession]);
     useEffect(() => { localStorage.setItem('oneledger_chit_schemes',         JSON.stringify(chitSchemes));         }, [chitSchemes]);
 
-    const nextBill = () => {
-        const stored = Number(localStorage.getItem('oneledger_bill_counter') || 0);
-        const highest = Math.max(0, ...[...transactions, ...deletedTransactions].map(t => Number(t.bill_number?.replace('OLP-', '')) || 0));
-        const next = Math.max(stored, highest) + 1;
-        localStorage.setItem('oneledger_bill_counter', String(next));
-        return `OLP-${String(next).padStart(6, '0')}`;
-    };
-
     const addChitScheme = (name) => {
         const trimmed = name.trim().toUpperCase();
         if (!trimmed) return;
@@ -113,7 +105,7 @@ export const AppProvider = ({ children }) => {
 
                 initialTxs.push({
                     id: newId(),
-                    bill_number: nextBill(),
+                    bill_number: null,
                     cid: cId,
                     type: type,
                     direction: isJama ? 'IN' : 'OUT',
@@ -188,6 +180,8 @@ export const AppProvider = ({ children }) => {
     };
 
     const addTransaction = (data) => {
+        const billNumber = data.bill_number?.trim().toUpperCase() || null;
+        if (billNumber && [...transactions, ...deletedTransactions].some(t => t.bill_number?.toUpperCase() === billNumber)) throw new Error('Bill number already exists. Use a different number or leave it blank.');
         const c = customers.find(x => x.id === data.customerId);
         let prevBal = 0;
 
@@ -212,7 +206,7 @@ export const AppProvider = ({ children }) => {
 
         const entry = {
             id: newId(),
-                    bill_number: nextBill(),
+            bill_number: billNumber,
             cid: data.customerId,
             type: data.type || 'CASH',
             direction,                                    // 'IN' | 'OUT'
@@ -436,7 +430,7 @@ export const AppProvider = ({ children }) => {
         ];
 
         setCustomers(customers);
-        setTransactions(transactions.map(t => ({...t, bill_number: nextBill()})));
+        setTransactions(transactions.map((t,i) => ({...t, bill_number: `DEMO-${String(i+1).padStart(6,'0')}`})));
         return 'Dummy data loaded — 15 customers, all 16 transaction combinations seeded!';
     };
 

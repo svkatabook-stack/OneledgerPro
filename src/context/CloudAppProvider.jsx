@@ -167,6 +167,7 @@ export const CloudAppProvider = ({ children }) => {
     const addTransaction = async data => {
         writer();
         const { data: row, error } = await supabase.rpc('record_transaction', { p_id: data.id || crypto.randomUUID(), p_entry: { ...data, images: receiptReferences(data.images) } });
+        if (error?.code === '23505') throw new Error('Bill number already exists. Use a different number or leave it blank.');
         if (error) throw error;
         await refresh();
         return dbTxToLocal(row);

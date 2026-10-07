@@ -92,6 +92,7 @@ const AddTransactionPage = () => {
     const [subType,     setSubType]     = useState('CASH');
     const [scheme,      setScheme]      = useState('');
     const [amount,      setAmount]      = useState('');
+    const [billNumber, setBillNumber] = useState('');
     const [billAmount,  setBillAmount]  = useState('');
     const [date,        setDate]        = useState(new Date().toISOString().split('T')[0]);
     const [dueDate,     setDueDate]     = useState('');
@@ -154,7 +155,7 @@ const AddTransactionPage = () => {
     };
 
     const resetForm = () => {
-        setOp('got'); setAmount(''); setBillAmount('');
+        setOp('got'); setAmount(''); setBillAmount(''); setBillNumber('');
         setDescription(''); setSaved(false); setSaving(false);
         setScheme(''); setImages([]); setDueDate('');
     };
@@ -197,6 +198,7 @@ const AddTransactionPage = () => {
             nave,
             grams:       subCfg.isGrams ? val : 0,
             bill_amount: n(billAmount),
+            bill_number: billNumber.trim().toUpperCase() || null,
             date,
             time:        txTime,
             description,
@@ -448,6 +450,14 @@ const AddTransactionPage = () => {
                     </div>
                 </div>
 
+                <div className="atp-form-section">
+                    <label htmlFor="transaction-bill-number" className="atp-label">Bill Number <span style={{fontWeight:400,textTransform:'none'}}>optional</span></label>
+                    <div className="atp-input-wrap">
+                        <input id="transaction-bill-number" type="text" maxLength={64} placeholder="Enter bill number (optional)"
+                            value={billNumber} onChange={e => setBillNumber(e.target.value)} style={{fontSize:'1rem',width:'100%',padding:12,color:'var(--text-primary)',background:'transparent',border:0}} />
+                    </div>
+                </div>
+
                 {/* Bill amount — only for RETAIL METAL */}
                 {subCfg?.hasBill && (
                     <div className="atp-form-section">
@@ -536,7 +546,6 @@ const AddTransactionPage = () => {
                     />
                 </div>
 
-                <p style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>Bill number: assigned automatically when saved.</p>
                 {/* Photos */}
                 <div className="atp-form-section">
                     <label className="atp-label">Customer Property Photos <span style={{ fontWeight: 400, textTransform: 'none' }}>optional</span></label>

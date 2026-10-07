@@ -57,6 +57,7 @@ test('local customer, category balances, photo, reload, export and navigation', 
     if (gave) await page.getByRole('button', { name: /YOU GAVE/ }).click();
     await page.locator('.atp-amount-input').first().fill(amount);
     if (field === 'retailGold') {
+      await page.getByLabel('Bill Number optional').fill(' gold/2026-42 ');
       await page.locator('input[type=file]').setInputFiles({
         name: 'receipt.png', mimeType: 'image/png',
         buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', 'base64'),
@@ -74,7 +75,8 @@ test('local customer, category balances, photo, reload, export and navigation', 
   }));
   expect(snapshot.customers).toHaveLength(1);
   expect(snapshot.transactions).toHaveLength(9);
-  expect(snapshot.transactions.map(tx => tx.bill_number)).toEqual(Array.from({length:9}, (_,i) => `OLP-${String(i+1).padStart(6,'0')}`));
+  expect(snapshot.transactions.filter(tx => tx.bill_number)).toHaveLength(1);
+  expect(snapshot.transactions[1].bill_number).toBe('GOLD/2026-42');
   for (const [field, amount] of Object.entries(expected)) expect(snapshot.customers[0][field]).toBeCloseTo(amount, 3);
   expect(snapshot.customers[0].cashBalance).toBe(2700.25);
   expect(snapshot.customers[0].goldBalance).toBe(5.375);
@@ -83,8 +85,8 @@ test('local customer, category balances, photo, reload, export and navigation', 
 
   await page.goto('/ledger');
   await page.getByRole('button', {name:'Global',exact:true}).click();
-  await page.getByLabel('Bill Number', {exact:true}).fill('olp-000002');
-  await expect(page.locator('tbody')).toContainText('OLP-000002');
+  await page.getByLabel('Bill Number', {exact:true}).fill('gold/2026-42');
+  await expect(page.locator('tbody')).toContainText('GOLD/2026-42');
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await page.getByRole('button', {name:'Bullion',exact:true}).click();
   await expect(page.getByText('No transactions found.', {exact:true})).toBeVisible();
