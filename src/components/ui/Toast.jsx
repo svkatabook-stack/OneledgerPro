@@ -1,10 +1,8 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import './Toast.css';
 
-const ToastContext = createContext(null);
-
-export const useToast = () => useContext(ToastContext);
+import { ToastContext } from './toastContext';
 
 let idCounter = 0;
 

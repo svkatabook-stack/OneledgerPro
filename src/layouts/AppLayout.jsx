@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, User, Settings, Menu, X, Activity, LogOut, BookOpen, PlusCircle } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/appState';
 import './AppLayout.css';
 import { isLocalMode } from '../lib/runtime';
 
 const AppLayout = () => {
     const location = useLocation();
-    const navigate = useNavigate();
-    const { authSession, signOut, syncError } = useAppContext();
+    const { authSession, signOut, syncError, isOnline, isLive, lastSyncedAt, refresh } = useAppContext();
     const [isMenuOpen,    setIsMenuOpen]    = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -154,6 +153,10 @@ const AppLayout = () => {
             {/* Main Content Area */}
             <main className="app-main">
                 <div className="content-container animate-fade-in">
+                    {!isLocalMode && <div role="status" style={{padding:8,fontSize:'0.8rem',color:'var(--text-muted)'}}>
+                        {!isOnline ? 'Offline — reconnect before saving. Your open form is kept in this tab.' : syncError ? 'Refresh failed — showing last loaded data.' : lastSyncedAt ? (isLive ? 'Connected' : 'Connected — periodic refresh') : 'Loading cloud data…'}
+                        {isOnline && <button type="button" onClick={refresh} style={{marginLeft:8}}>Refresh data</button>}
+                    </div>}
                     {syncError && <div role="alert" style={{ padding: 12, color: '#fca5a5' }}>Cloud refresh failed: {syncError}. Showing the last loaded data.</div>}
                     <Outlet />
                 </div>

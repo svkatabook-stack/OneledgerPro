@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AppProvider, useAppContext } from './context/AppContext';
+import { AppProvider } from './context/AppContext';
+import { useAppContext } from './context/appState';
 import AppLayout from './layouts/AppLayout';
 import { CloudAppProvider } from './context/CloudAppProvider';
 import { isLocalMode } from './lib/runtime';

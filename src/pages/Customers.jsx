@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { useToast } from '../components/ui/Toast';
+import { useAppContext } from '../context/appState';
+import { useToast } from '../components/ui/toastContext';
 import { Check, Search, ArrowLeft, Download, Pencil, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
@@ -284,6 +284,7 @@ const Customers = () => {
                                             className="cust-edit-btn"
                                             onClick={e => { e.stopPropagation(); setEditCustomer(c); }}
                                             title="Edit customer"
+                                            disabled={authSession?.role === 'view'}
                                         >
                                             <Pencil size={14} />
                                         </button>

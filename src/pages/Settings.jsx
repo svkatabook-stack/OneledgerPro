@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button } from '../components/ui/Primitives';
-import { useAppContext } from '../context/AppContext';
-import { useToast } from '../components/ui/Toast';
+import { useAppContext } from '../context/appState';
+import { useToast } from '../components/ui/toastContext';
 import { isLocalMode } from '../lib/runtime';
 import { supabase, isSupabaseReady } from '../lib/supabase';
 import { Database, Trash2, ArrowLeft, KeyRound, Eye, EyeOff, Download, HardDrive } from 'lucide-react';
@@ -79,6 +79,7 @@ const Settings = () => {
                     return (b.time || '').localeCompare(a.time || '');
                 })
                 .map(t => ({
+                    'Bill Number': t.bill_number || '',
                     'Date':        t.date,
                     'Time':        t.time ? String(t.time).substring(0, 5) : '',
                     'Customer':    custMap[t.cid] || t.cid,

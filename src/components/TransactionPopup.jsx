@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Camera, XCircle, Search, Check, CalendarDays, Phone, X } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/appState';
 import ReceiptModal from './ReceiptModal';
 import { compressImage, uploadToCloudinary } from '../utils/imageUtils';
 import './TransactionPopup.css';

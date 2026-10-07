@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, UserCheck, Eye, EyeOff, Loader, ArrowLeft } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/appState';
 import { supabase, isSupabaseReady } from '../lib/supabase';
 import { isLocalMode, LOCAL_PASSCODES } from '../lib/runtime';
 import { ROLE_EMAILS } from '../lib/roleAuth';

@@ -1,8 +1,8 @@
+import { useClock } from '../lib/useClock';
 import ReceiptImage from '../components/ReceiptImage';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
-import { supabase } from '../lib/supabase';
+import { useAppContext } from '../context/appState';
 import { Search, Camera, Trash2, ArrowLeft, Download, TrendingUp, TrendingDown, X, User } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -70,7 +70,7 @@ const buildCustomerSheets = (custTxs, categories) => {
         if (catTxs.length === 0) return;
 
         const sheetDefs = EXPORT_SHEETS[catKey] || [];
-        sheetDefs.forEach(({ key, label, isGrams, typeFilter }) => {
+        sheetDefs.forEach(({ label, isGrams, typeFilter }) => {
             const rows = catTxs
                 .filter(typeFilter)
                 .sort((a, b) => a.createdAt - b.createdAt);
@@ -89,6 +89,7 @@ const buildCustomerSheets = (custTxs, categories) => {
                 const gave = parseFloat(t.nave || 0);
                 running += got - gave;
                 const row = {
+                    'Bill Number': t.bill_number || '',
                     'Date':     t.date,
                     'Time':     t.time ? t.time.substring(0, 5) : '',
                     [gotH]:     got  > 0 ? (isGrams ? fmtG(got)  : fmt(got))  : '',
@@ -123,7 +124,7 @@ const buildCustomerSheets = (custTxs, categories) => {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const Transactions = () => {
-    const { transactions, customers, deleteTransaction, deletedTransactions, authSession, orgId } = useAppContext();
+    const { transactions, customers, deleteTransaction, deletedTransactions, authSession } = useAppContext();
     const navigate = useNavigate();
 
     // Top-level view: 'customer' | 'global'
@@ -142,6 +143,7 @@ const Transactions = () => {
     const [globalSub,     setGlobalSub]     = useState('ALL');
 
     const [dateFrom, setDateFrom] = useState('');
+    const [billSearch, setBillSearch] = useState('');
     const [dateTo,   setDateTo]   = useState('');
 
     // Delete confirmation modal state
@@ -149,19 +151,20 @@ const Transactions = () => {
     const [deleteInput,     setDeleteInput]     = useState('');
 
     // Recently deleted state
-    const [deletedTxs,     setDeletedTxs]     = useState([]);
-    const [deletedLoading, setDeletedLoading] = useState(false);
+
+    const deletedLoading = false;
     const [lightboxImages, setLightboxImages] = useState(null); // null | array of {url}
 
     const isOwner          = authSession?.role === 'owner' || authSession?.role === 'super-admin';
+    const now = useClock();
     const isRestrictedView = authSession?.role === 'staff' || authSession?.role === 'view';
 
     // For staff/view: only show last 24h transactions (pre-filter before enrichment)
     const baseTransactions = useMemo(() => {
         if (!isRestrictedView) return transactions;
-        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        const cutoff = now - 24 * 60 * 60 * 1000;
         return transactions.filter(t => t.createdAt && t.createdAt >= cutoff);
-    }, [transactions, isRestrictedView]);
+    }, [transactions, isRestrictedView, now]);
 
     // Close customer dropdown on outside click
     useEffect(() => {
@@ -172,47 +175,14 @@ const Transactions = () => {
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    // Load recently deleted transactions when that view is activated
-    useEffect(() => {
-        if (viewMode !== 'deleted' || !isOwner) return;
-
-        // Always show local cache immediately — works offline and when RLS blocks UPDATE
-        const localRows = deletedTransactions.map(tx => ({
-            ...tx,
-            customerName: customerMap[tx.cid]?.name || 'Unknown',
-        }));
-        setDeletedTxs(localRows);
-        setDeletedLoading(false);
-
-        // If Supabase is available, also try to fetch (shows entries deleted from other devices)
-        if (!orgId) return;
-        supabase
-            .from('transactions')
-            .select('*')
-            .eq('org_id', orgId)
-            .not('deleted_at', 'is', null)
-            .order('deleted_at', { ascending: false })
-            .limit(100)
-            .then(({ data, error }) => {
-                if (error || !data || data.length === 0) return; // keep local rows on error/empty
-                setDeletedTxs(data.map(tx => ({
-                    id: tx.id, cid: tx.customer_id,
-                    date: tx.date, time: tx.time,
-                    category: tx.category, sub_type: tx.sub_type, type: tx.type,
-                    jama: parseFloat(tx.jama || 0), nave: parseFloat(tx.nave || 0),
-                    added_by: tx.added_by, deleted_at: tx.deleted_at,
-                    customerName: customerMap[tx.customer_id]?.name || 'Unknown',
-                })));
-            })
-            .catch(() => {}); // silently keep local rows on network error
-    }, [viewMode, orgId, deletedTransactions]);
-
     // Build a customer ID → {name, mobile} map once — O(n) instead of O(n×m) per transaction
     const customerMap = useMemo(() => {
         const map = {};
         customers.forEach(c => { map[c.id] = { name: c.name, mobile: c.mobile || '' }; });
         return map;
     }, [customers]);
+
+    const deletedTxs = useMemo(() => deletedTransactions.map(tx => ({...tx, customerName: customerMap[tx.cid]?.name || 'Unknown'})), [deletedTransactions, customerMap]);
 
     // Enrich transactions — direct map lookup instead of .find() per transaction
     // Uses baseTransactions (24h-filtered for staff/view, full set for owner)
@@ -236,15 +206,17 @@ const Transactions = () => {
     const filtered = useMemo(() => {
         let list = enriched.filter(t => matchesTab(t, activeTab, activeSub));
         if (custFilter) list = list.filter(t => t.cid === custFilter.id);
+        if (billSearch.trim()) list = list.filter(t => (t.bill_number || '').toLowerCase().includes(billSearch.trim().toLowerCase()));
         if (dateFrom) list = list.filter(t => t.date >= dateFrom);
         if (dateTo)   list = list.filter(t => t.date <= dateTo);
         return [...list].sort((a, b) => a.createdAt - b.createdAt);
-    }, [enriched, activeTab, activeSub, custFilter, dateFrom, dateTo]);
+    }, [enriched, activeTab, activeSub, custFilter, dateFrom, dateTo, billSearch]);
 
     // Stats
     const tabStats = useMemo(() => {
         const base = enriched.filter(t => {
             if (!matchesTab(t, activeTab, activeSub)) return false;
+            if (billSearch.trim() && !(t.bill_number || '').toLowerCase().includes(billSearch.trim().toLowerCase())) return false;
             if (custFilter && t.cid !== custFilter.id) return false;
             if (dateFrom && t.date < dateFrom) return false;
             if (dateTo   && t.date > dateTo)   return false;
@@ -278,57 +250,12 @@ const Transactions = () => {
             silverGot, silverGave, silverNet: silverGot - silverGave,
             metalGot, metalGave, metalNet: metalGot - metalGave,
         };
-    }, [enriched, activeTab, activeSub, custFilter, dateFrom, dateTo]);
+    }, [enriched, activeTab, activeSub, custFilter, dateFrom, dateTo, billSearch]);
 
-    // ── Global Export ──────────────────────────────────────────────────────────
-    const handleGlobalExport = () => {
-        const today = new Date().toISOString().slice(0, 10);
-        const rupeeTxs = enriched.filter(t =>
-            t.category !== 'BULLION' &&
-            !(t.category === 'SILVER' && t.sub_type === 'SILVER')
-        );
-        const sheet1 = rupeeTxs.map(t => ({
-            'Date': t.date, 'Time': t.time, 'Category': t.category || '',
-            'Sub-type': t.sub_type || '', 'Chit Scheme': t.chit_scheme || '',
-            'Customer': t.customerName, 'Mobile': t.customerMobile,
-            'YOU GOT (₹)': t.jama > 0 ? fmt(t.jama) : '',
-            'YOU GAVE (₹)': t.nave > 0 ? fmt(t.nave) : '',
-            'Bill Amount (₹)': t.bill_amount ? fmt(t.bill_amount) : '',
-            'Grams': t.grams ? fmtG(t.grams) : '',
-            'Description': t.description || '', 'Added By': t.added_by || '',
-            'Curr Balance': t.currentBalance !== undefined ? fmt(t.currentBalance) : '',
-            'New Balance':  t.newBalance     !== undefined ? fmt(t.newBalance)     : '',
-        }));
-
-        const gramsTxs = enriched.filter(t =>
-            t.category === 'BULLION' ||
-            ((t.category === 'RETAIL' || t.category === 'SILVER') && t.sub_type === 'METAL') ||
-            (t.category === 'SILVER' && t.sub_type === 'SILVER')
-        );
-        const sheet2 = gramsTxs.map(t => ({
-            'Date': t.date, 'Time': t.time, 'Category': t.category || '',
-            'Metal Type': t.metal_type || (t.type === 'GOLD' ? 'GOLD' : t.type === 'SILVER' ? 'SILVER' : ''),
-            'Customer': t.customerName, 'Mobile': t.customerMobile,
-            'YOU GOT (g)': t.jama > 0 ? fmtG(t.jama) : '',
-            'YOU GAVE (g)': t.nave > 0 ? fmtG(t.nave) : '',
-            'Bill Amount (₹)': t.bill_amount ? fmt(t.bill_amount) : '',
-            'Description': t.description || '', 'Added By': t.added_by || '',
-        }));
-
-        const wb = XLSX.utils.book_new();
-        const ws1 = XLSX.utils.json_to_sheet(sheet1);
-        XLSX.utils.book_append_sheet(wb, ws1, 'Rupee Transactions');
-        const ws2 = XLSX.utils.json_to_sheet(sheet2);
-        XLSX.utils.book_append_sheet(wb, ws2, 'Gold-Silver Grams');
-        const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        saveAs(new Blob([buf], { type: 'application/octet-stream' }), `OneLedger_Ledger_${today}.xlsx`);
-    };
-
-    // ── Customer Statement Export ──────────────────────────────────────────────
     const handleCustomerExport = () => {
         if (!custFilter) return;
         const today = new Date().toISOString().slice(0, 10);
-        const custTxs = enriched
+        const custTxs = filtered
             .filter(t => t.cid === custFilter.id)
             .sort((a, b) => a.createdAt - b.createdAt);
 
@@ -358,12 +285,9 @@ const Transactions = () => {
     };
 
     // Global view pagination — start at 200 rows, "Load More" adds 200
-    const [globalDisplayLimit, setGlobalDisplayLimit] = useState(200);
-
-    // Reset to page 1 whenever any global filter changes
-    useEffect(() => {
-        setGlobalDisplayLimit(200);
-    }, [globalTab, globalSub, globalSearch, dateFrom, dateTo]);
+    const [pagination, setPagination] = useState({key:'',limit:200});
+    const filterKey = JSON.stringify([globalTab,globalSub,globalSearch,dateFrom,dateTo,billSearch]);
+    const globalDisplayLimit = pagination.key === filterKey ? pagination.limit : 200;
 
     // Global view — same category+sub filtering as customer tab, plus free-text search
     const globalFiltered = useMemo(() => {
@@ -376,10 +300,50 @@ const Transactions = () => {
                 (t.description || '').toLowerCase().includes(q)
             );
         }
+        if (billSearch.trim()) list = list.filter(t => (t.bill_number || '').toLowerCase().includes(billSearch.trim().toLowerCase()));
         if (dateFrom) list = list.filter(t => t.date >= dateFrom);
         if (dateTo)   list = list.filter(t => t.date <= dateTo);
         return [...list].sort((a, b) => a.createdAt - b.createdAt);
-    }, [enriched, globalTab, globalSub, globalSearch, dateFrom, dateTo]);
+    }, [enriched, globalTab, globalSub, globalSearch, dateFrom, dateTo, billSearch]);
+
+    // ── Global Export ──────────────────────────────────────────────────────────
+    const handleGlobalExport = () => {
+        const today = new Date().toISOString().slice(0, 10);
+        const rupeeTxs = globalFiltered.filter(t => !isGramsType(t));
+        const sheet1 = rupeeTxs.map(t => ({
+            'Bill Number': t.bill_number || '', 'Date': t.date, 'Time': t.time, 'Category': t.category || '',
+            'Sub-type': t.sub_type || '', 'Chit Scheme': t.chit_scheme || '',
+            'Customer': t.customerName, 'Mobile': t.customerMobile,
+            'YOU GOT (₹)': t.jama > 0 ? fmt(t.jama) : '',
+            'YOU GAVE (₹)': t.nave > 0 ? fmt(t.nave) : '',
+            'Bill Amount (₹)': t.bill_amount ? fmt(t.bill_amount) : '',
+            'Grams': t.grams ? fmtG(t.grams) : '',
+            'Description': t.description || '', 'Added By': t.added_by || '',
+            'Curr Balance': t.currentBalance !== undefined ? fmt(t.currentBalance) : '',
+            'New Balance':  t.newBalance     !== undefined ? fmt(t.newBalance)     : '',
+        }));
+
+        const gramsTxs = globalFiltered.filter(isGramsType);
+        const sheet2 = gramsTxs.map(t => ({
+            'Bill Number': t.bill_number || '', 'Date': t.date, 'Time': t.time, 'Category': t.category || '',
+            'Metal Type': t.metal_type || (t.type === 'GOLD' ? 'GOLD' : t.type === 'SILVER' ? 'SILVER' : ''),
+            'Customer': t.customerName, 'Mobile': t.customerMobile,
+            'YOU GOT (g)': t.jama > 0 ? fmtG(t.jama) : '',
+            'YOU GAVE (g)': t.nave > 0 ? fmtG(t.nave) : '',
+            'Bill Amount (₹)': t.bill_amount ? fmt(t.bill_amount) : '',
+            'Description': t.description || '', 'Added By': t.added_by || '',
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws1 = XLSX.utils.json_to_sheet(sheet1);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Rupee Transactions');
+        const ws2 = XLSX.utils.json_to_sheet(sheet2);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Gold-Silver Grams');
+        const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        saveAs(new Blob([buf], { type: 'application/octet-stream' }), `OneLedger_Ledger_${today}.xlsx`);
+    };
+
+    // ── Customer Statement Export ──────────────────────────────────────────────
 
     const globalStats = useMemo(() => {
         let cashGot = 0, cashGave = 0;
@@ -473,7 +437,7 @@ const Transactions = () => {
                     </button>
                 ) : viewMode === 'global' ? (
                     <button onClick={handleGlobalExport} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#10b981', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
-                        <Download size={16} /> Export All
+                        <Download size={16} /> Export filtered
                     </button>
                 ) : null}
             </div>
@@ -512,6 +476,12 @@ const Transactions = () => {
             )}
 
             {/* ── GLOBAL VIEW ───────────────────────────────────────────── */}
+            {viewMode !== 'deleted' && <div className="search-bar" style={{marginBottom:12}}>
+                <label htmlFor="bill-search">Bill Number</label>
+                <input id="bill-search" placeholder="e.g. OLP-000001" value={billSearch} onChange={e => setBillSearch(e.target.value)} />
+                {billSearch && <button type="button" onClick={() => setBillSearch('')}>Clear bill filter</button>}
+            </div>}
+
             {viewMode === 'global' && (<>
                 {/* Category tabs — identical to customer view */}
                 <div className="tx-cat-tabs">
@@ -607,7 +577,7 @@ const Transactions = () => {
                     <table className="ui-table">
                         <thead>
                             <tr>
-                                <th>Date / Time</th>
+                                <th>Bill / Date / Time</th>
                                 <th>Type</th>
                                 <th>Customer</th>
                                 <th>Amount</th>
@@ -622,12 +592,11 @@ const Transactions = () => {
                                 <tr><td colSpan={isOwner ? 8 : 7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No transactions found.</td></tr>
                             ) : globalVisible.map(t => {
                                 const isGot   = t.jama > 0;
-                                const isGrams = isGramsType(t);
                                 const bFmt    = balFmt(t);
                                 return (
                                     <tr key={t.id}>
                                         <td style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>
-                                            {t.date}<br /><span style={{ fontSize: '0.7rem' }}>{t.time ? t.time.substring(0,5) : ''}</span>
+                                            <strong style={{display:'block',color:'var(--text-primary)'}}>{t.bill_number || '—'}</strong>{t.date}<br /><span style={{ fontSize: '0.7rem' }}>{t.time ? t.time.substring(0,5) : ''}</span>
                                         </td>
                                         <td><span className={`tb-badge tb-${(t.category || t.type || '').toLowerCase()}`}>{[t.category, t.sub_type].filter(Boolean).join(' · ') || t.type}</span></td>
                                         <td style={{ fontWeight: 600, fontSize: '0.88rem' }}>
@@ -657,7 +626,7 @@ const Transactions = () => {
                 {globalFiltered.length > globalDisplayLimit && (
                     <div style={{ textAlign: 'center', padding: '0.75rem 1rem' }}>
                         <button
-                            onClick={() => setGlobalDisplayLimit(l => l + 200)}
+                            onClick={() => setPagination({key:filterKey,limit:globalDisplayLimit+200})}
                             style={{
                                 padding: '0.5rem 1.5rem',
                                 background: 'rgba(99,102,241,0.15)',
@@ -867,7 +836,7 @@ const Transactions = () => {
                 <table className="ui-table">
                     <thead>
                         <tr>
-                            <th>Date / Time</th>
+                            <th>Bill / Date / Time</th>
                             <th>Category</th>
                             <th>Customer</th>
                             <th>Amount</th>
@@ -894,7 +863,7 @@ const Transactions = () => {
                             return (
                                 <tr key={t.id}>
                                     <td style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>
-                                        {t.date}<br />
+                                        <strong style={{display:'block',color:'var(--text-primary)'}}>{t.bill_number || '—'}</strong>{t.date}<br />
                                         <span style={{ fontSize: '0.7rem' }}>{t.time ? t.time.substring(0, 5) : ''}</span>
                                     </td>
                                     <td>

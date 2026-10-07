@@ -1,7 +1,7 @@
 import ReceiptImage from '../components/ReceiptImage';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/appState';
 import { Button } from '../components/ui/Primitives';
 import { ArrowLeft, Camera, X } from 'lucide-react';
 import './WorkingPage.css';
@@ -27,11 +27,7 @@ const WorkingPage = () => {
         }
         list = list.sort((a, b) => a.createdAt - b.createdAt);
 
-        let runBal = 0;
-        return list.map(t => {
-            runBal += (t.jama - t.nave);
-            return { ...t, runningBalance: runBal };
-        });
+        return list.reduce((rows, t) => [...rows, {...t, runningBalance: (rows.at(-1)?.runningBalance || 0) + t.jama - t.nave}], []);
     }, [transactions, id, typeFilter]);
 
     if (!customer) {
@@ -97,7 +93,7 @@ const WorkingPage = () => {
                                 customerTxs.map(t => (
                                     <tr key={t.id} onClick={() => setSelectedTx(t)} style={{ cursor: 'pointer' }}>
                                         <td style={{ fontSize: '0.8rem' }}>
-                                            {t.date}<br />
+                                            <strong style={{display:'block'}}>{t.bill_number || '—'}</strong>{t.date}<br />
                                             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t.time ? t.time.substring(0,5) : ''}</span>
                                         </td>
                                         <td><span className={`tb-badge tb-${t.type.toLowerCase()}`}>{t.type}</span></td>
@@ -152,6 +148,7 @@ const WorkingPage = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
                             {[
                                 ['Type',          <span className={`tb-badge tb-${selectedTx.type.toLowerCase()}`}>{selectedTx.type}</span>],
+                                ['Bill Number', selectedTx.bill_number || '—'],
                                 ['Date',          `${selectedTx.date} ${selectedTx.time ? selectedTx.time.substring(0,5) : ''}`],
                                 ['JAMA (Given)',   selectedTx.jama > 0 ? <span className="text-green" style={{ fontWeight: 600 }}>{fmtAmt(selectedTx, selectedTx.jama)}</span> : '—'],
                                 ['NAVE (Received)',selectedTx.nave > 0 ? <span className="text-red"   style={{ fontWeight: 600 }}>{fmtAmt(selectedTx, selectedTx.nave)}</span>   : '—'],
@@ -168,7 +165,7 @@ const WorkingPage = () => {
 
                         {selectedTx.images?.length > 0 && (
                             <div style={{ marginTop: '1rem' }}>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Receipt Photos</p>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Customer Property Photos</p>
                                 {selectedTx.images.map((img, i) => (
                                     <div key={i}>
                                         <ReceiptImage image={img} alt={`Receipt ${i + 1}`} style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />

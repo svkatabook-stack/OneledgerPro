@@ -61,7 +61,7 @@ test('local customer, category balances, photo, reload, export and navigation', 
         name: 'receipt.png', mimeType: 'image/png',
         buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', 'base64'),
       });
-      await expect(page.getByAltText('receipt', { exact: true }).first()).toBeVisible();
+      await expect(page.getByAltText('Customer property', { exact: true }).first()).toBeVisible();
     }
     await page.getByRole('button', { name: 'Save Transaction', exact: true }).click();
     await expect(page.locator('.popup-overlay')).toBeVisible();

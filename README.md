@@ -43,7 +43,7 @@ WhatsApp and the browser Share button are explicit user actions and may open ext
 npm run dev       # Local development on 127.0.0.1:5173
 npm run build     # Production bundle in dist/
 npm run preview   # Preview the production bundle
-npm run lint      # Existing lint rules; inherited issues remain
+npm run lint      # ESLint (zero errors/warnings)
 npm run test:smoke # Local browser smoke checks (requires Google Chrome)
 npm run test:cloud # Mocked cloud authentication/write checks
 npm run test:reports # Report calendar-period checks
@@ -54,7 +54,7 @@ npm run test:reports # Report calendar-period checks
 - Production build passed.
 - Five Playwright smoke tests passed in an isolated Chrome profile: all three demo logins, customer creation, all eight category balances, an outgoing cash entry, local photo compression, reload persistence, page navigation, Excel download, and sample-data loading.
 - The main local workflow made no external HTTP requests.
-- Lint currently reports 19 errors and 4 warnings, including inherited issues and shared-export/hook warnings in the cloud integration. The lint check is not passing.
+- Lint passes after the October 7 cleanup. See [release verification](docs/RELEASE_20261007.md).
 
 ## New integrations — pending
 
@@ -62,7 +62,7 @@ npm run test:reports # Report calendar-period checks
 |---|---|---|
 | GitHub | svkatabook-stack/OneledgerPro | Source repository |
 | Supabase | Authentication, database, realtime, report function | Implementation ready; provisioning tracked in setup guide |
-| Netlify | Website hosting | Site deployed; cloud activation pending |
+| Netlify | Website hosting | Cloud branch deployed; production main awaiting acceptance |
 | Cloudflare | Images/storage | Adapter not implemented; local photos work |
 | Gmail | Send alerts from `s.vkatabook@gmail.com` | Not connected; recipient: `s.vkatabook@gmail.com` |
 

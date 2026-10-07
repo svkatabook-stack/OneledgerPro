@@ -6,7 +6,7 @@ Owner, sender, and recipient: `s.vkatabook@gmail.com`.
 
 ## 1. Database
 
-In the new project's SQL Editor, run `supabase/schema.sql` once. It is the same script as `supabase/migrations/202610030001_cloud_foundation.sql`; do not apply both. This is a fresh-project baseline, not an upgrade script for the old shop database.
+In the new project's SQL Editor, run `supabase/schema.sql` once. It includes the foundation and subsequent migrations; do not also apply those migrations to a fresh database. Existing installations apply only new migration files in order. This is a fresh-project baseline, not an upgrade script for the old shop database.
 
 The six tables are organizations, profiles, customers, transactions, chit_schemes, and report_runs. RLS is enabled on all six. Anonymous clients have no access. A profile created for a new Auth user starts as an unlinked View account. Clients cannot change profile roles, organization membership, or stored balance columns.
 
@@ -104,3 +104,8 @@ Cloud `bowzvcvg` uses the dedicated Signed/authenticated preset `oneledger_recei
 The existing `ml_default` preset is unchanged. API credential names are confirmed in Supabase Secrets. Real upload verification
 is still pending on the branch deployment.
 See [Cloudinary setup](CLOUDINARY_SETUP.md) for the exact secret names and steps.
+
+## October 7 release
+
+Bill numbering and Staff/View history policies were applied to the linked database.
+See [release verification](RELEASE_20261007.md) for behavior, tests, and acceptance steps.
