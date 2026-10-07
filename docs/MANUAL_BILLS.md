@@ -1,6 +1,7 @@
 # Optional manual bill numbers
 
-Prepared on the feature branch; not applied to production yet.
+Reviewed in the local demo and approved for production on 7 October 2026.
+The manual-bill migration was applied successfully to production before this release.
 
 The transaction form includes Bill Number (optional) immediately below Amount/Weight.
 Blank entries save without a bill number. Nonblank references are trimmed, uppercased,
@@ -11,8 +12,7 @@ OLP numbers remain unchanged. Local demo sample fixtures use DEMO references.
 Before deploying this frontend, apply `202610070003_optional_manual_bills.sql` once.
 It removes the automatic numbering trigger, allows null numbers, and updates the write
 RPC to accept the supplied reference. The old private counter is retained but unused.
-This migration affects the shared database used by main and branch; defer until the
-user completes local review and approves the production release.
+This migration affects the shared database used by main and branch.
 
 Local demo tests cover manual input, multiple blank entries, persistence and search;
 cloud mocks cover save/retry/search/export. PostgreSQL tests cover nullable bills,
