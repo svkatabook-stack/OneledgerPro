@@ -1,7 +1,7 @@
 # OneLedger Pro cloud setup
 
 Project: `zlcittlgjvsiwstkhjvv` · Region: Mumbai.
-Current website: https://comfy-klepon-85d3fc.netlify.app (rename later).
+Current website: https://oneledgerpro.netlify.app (production; feature work uses branch deploys).
 Owner, sender, and recipient: `s.vkatabook@gmail.com`.
 
 ## 1. Database
@@ -101,6 +101,6 @@ Validation: four mocked cloud browser tests and five server authorization tests 
 
 Private, server-signed receipt upload support is implemented on the feature branch.
 Cloud `bowzvcvg` uses the dedicated Signed/authenticated preset `oneledger_receipts`.
-The existing `ml_default` preset is unchanged. API credentials and a real upload
-verification are still required before deploying this frontend change.
+The existing `ml_default` preset is unchanged. API credential names are confirmed in Supabase Secrets. Real upload verification
+is still pending on the branch deployment.
 See [Cloudinary setup](CLOUDINARY_SETUP.md) for the exact secret names and steps.

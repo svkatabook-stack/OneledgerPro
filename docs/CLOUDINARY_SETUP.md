@@ -42,6 +42,6 @@ Mock tests cover permission checks, signed upload parameters, reference-only per
 size/format rejection, private links and upload/reload rendering. They do not establish that
 real Cloudinary credentials or delivery work; a live upload is required after adding secrets.
 
-Deployment status (2026-10-06): `receipt-images` is deployed and rejects unauthenticated
-requests with HTTP 401. Cloud name/preset settings are saved. API key/secret entry and
-a live Cloudinary upload remain pending; frontend deployment is intentionally held.
+Deployment status (2026-10-07): `receipt-images` is deployed and rejects unauthenticated
+requests with HTTP 401. All four secret names are confirmed in Supabase. The user authorized frontend branch
+deployment to the renamed Netlify project `oneledgerpro`. Live upload verification is pending.
