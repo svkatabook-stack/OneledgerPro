@@ -35,7 +35,7 @@ export function cleanupSupabaseStorage() {
                             console.log('[Auth] Cleaned old token by created_at:', key);
                         }
                     }
-                } catch (e) {
+                } catch {
                     localStorage.removeItem(key);
                 }
             }
@@ -53,7 +53,16 @@ if (ready && typeof window !== 'undefined' && window.localStorage) {
 export const supabase = createClient(
     ready ? supabaseUrl : 'https://placeholder.supabase.co',
     ready ? supabaseKey : 'local-placeholder',
-    { auth: { persistSession: ready, autoRefreshToken: ready, detectSessionInUrl: ready, storageKey: 'oneledger-supabase-auth' } },
+    { global: { fetch: (input, init = {}) => {
+        const controller = new AbortController();
+        const abort = () => controller.abort();
+        if (init.signal?.aborted) controller.abort();
+        init.signal?.addEventListener('abort', abort, { once:true });
+        const timer = setTimeout(abort, 45000);
+        return fetch(input, {...init, signal:controller.signal}).finally(() => {
+            clearTimeout(timer); init.signal?.removeEventListener('abort',abort);
+        });
+    } }, auth: { persistSession: ready, autoRefreshToken: ready, detectSessionInUrl: ready, storageKey: 'oneledger-supabase-auth' } },
 );
 
 /** True when real Supabase credentials are configured */

@@ -61,7 +61,7 @@ test('local customer, category balances, photo, reload, export and navigation', 
         name: 'receipt.png', mimeType: 'image/png',
         buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', 'base64'),
       });
-      await expect(page.getByAltText('receipt', { exact: true }).first()).toBeVisible();
+      await expect(page.getByAltText('Customer property', { exact: true }).first()).toBeVisible();
     }
     await page.getByRole('button', { name: 'Save Transaction', exact: true }).click();
     await expect(page.locator('.popup-overlay')).toBeVisible();
@@ -74,11 +74,23 @@ test('local customer, category balances, photo, reload, export and navigation', 
   }));
   expect(snapshot.customers).toHaveLength(1);
   expect(snapshot.transactions).toHaveLength(9);
+  expect(snapshot.transactions.map(tx => tx.bill_number)).toEqual(Array.from({length:9}, (_,i) => `OLP-${String(i+1).padStart(6,'0')}`));
   for (const [field, amount] of Object.entries(expected)) expect(snapshot.customers[0][field]).toBeCloseTo(amount, 3);
   expect(snapshot.customers[0].cashBalance).toBe(2700.25);
   expect(snapshot.customers[0].goldBalance).toBe(5.375);
   expect(snapshot.customers[0].silverBalance).toBe(22.875);
   expect(snapshot.transactions.find(tx => tx.type === 'GOLD' && tx.category === 'RETAIL').images[0].url).toMatch(/^data:image\//);
+
+  await page.goto('/ledger');
+  await page.getByRole('button', {name:'Global',exact:true}).click();
+  await page.getByLabel('Bill Number', {exact:true}).fill('olp-000002');
+  await expect(page.locator('tbody')).toContainText('OLP-000002');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await page.getByRole('button', {name:'Bullion',exact:true}).click();
+  await expect(page.getByText('No transactions found.', {exact:true})).toBeVisible();
+  await page.getByRole('button', {name:'All',exact:true}).click();
+  await page.getByRole('button', {name:'Clear bill filter',exact:true}).click();
+  await expect(page.locator('tbody tr')).toHaveCount(9);
 
   for (const path of ['/', '/customers', `/customers/${snapshot.customers[0].id}`, '/ledger', '/due', '/settings']) {
     await page.goto(path);

@@ -1,8 +1,9 @@
+import ReceiptImage from '../components/ReceiptImage';
 import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowLeft, CheckCircle2, ChevronRight, Camera, X } from 'lucide-react';
-import { useToast } from '../components/ui/Toast';
-import { useAppContext, getCatBalKey } from '../context/AppContext';
+import { useToast } from '../components/ui/toastContext';
+import { useAppContext, getCatBalKey } from '../context/appState';
 import { compressImage, uploadToCloudinary } from '../utils/imageUtils';
 import ReceiptModal from '../components/ReceiptModal';
 import '../components/TransactionPopup.css';
@@ -175,10 +176,10 @@ const AddTransactionPage = () => {
     };
 
     /* ── Save ── */
-    const canSave = n(amount) > 0 && (!isChit || scheme);
+    const canSave = n(amount) > 0 && (!isChit || scheme) && !isUploading;
 
     const handleSave = async () => {
-        if (!canSave || saving) return;
+        if (!canSave || saving || isUploading) return;
         setSaving(true);
 
         const val  = n(amount);
@@ -535,9 +536,10 @@ const AddTransactionPage = () => {
                     />
                 </div>
 
+                <p style={{fontSize:'0.85rem',color:'var(--text-muted)'}}>Bill number: assigned automatically when saved.</p>
                 {/* Photos */}
                 <div className="atp-form-section">
-                    <label className="atp-label">Photos <span style={{ fontWeight: 400, textTransform: 'none' }}>optional</span></label>
+                    <label className="atp-label">Customer Property Photos <span style={{ fontWeight: 400, textTransform: 'none' }}>optional</span></label>
                     <input
                         type="file"
                         accept="image/*"
@@ -558,13 +560,13 @@ const AddTransactionPage = () => {
                         }}
                     >
                         <Camera size={16} />
-                        {isUploading ? 'Uploading...' : 'Add Photo'}
+                        {isUploading ? 'Uploading...' : 'Add Property Photo'}
                     </button>
                     {images.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                             {images.map((img, i) => (
                                 <div key={i} style={{ position: 'relative', width: '72px', height: '72px' }}>
-                                    <img src={img.url} alt="receipt" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)' }} />
+                                    <ReceiptImage image={img} alt="Customer property" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)' }} />
                                     <button
                                         onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
                                         style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#ef4444', border: 'none', borderRadius: '50%', width: '20px', height: '20px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}

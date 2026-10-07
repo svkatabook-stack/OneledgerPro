@@ -1,6 +1,7 @@
+import { useClock } from '../lib/useClock';
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/appState';
 import './Dashboard.css';
 
 const fmt  = (v) => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -124,12 +125,13 @@ const Dashboard = () => {
     const { customers, transactions, authSession } = useAppContext();
 
     // Staff / View roles see only last-24h transactions (owner / super-admin see all)
+    const now = useClock();
     const isRestrictedView = authSession?.role === 'staff' || authSession?.role === 'view';
     const txFor24h = useMemo(() => {
         if (!isRestrictedView) return transactions;
-        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        const cutoff = now - 24 * 60 * 60 * 1000;
         return transactions.filter(t => t.createdAt && t.createdAt >= cutoff);
-    }, [transactions, isRestrictedView]);
+    }, [transactions, isRestrictedView, now]);
 
     // Aggregate stats per category
     const stats = useMemo(() => {

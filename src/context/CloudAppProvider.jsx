@@ -1,6 +1,10 @@
+import { useClock } from '../lib/useClock';
+import { visibleTransactions } from '../lib/roleAccess';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { AppContext, dbCustToLocal, dbTxToLocal } from './AppContext';
+import { AppContext, dbCustToLocal, dbTxToLocal } from './appState';
 import { supabase, isSupabaseReady } from '../lib/supabase';
+
+import { receiptReferences, clearReceiptCache } from '../lib/receiptImages';
 
 // Cloud data never reads or writes the local demo cache.
 async function allRows(table, orgId) {
@@ -15,6 +19,7 @@ async function allRows(table, orgId) {
 }
 
 export const CloudAppProvider = ({ children }) => {
+    const now = useClock();
     const [customers, setCustomers] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [deletedTransactions, setDeletedTransactions] = useState([]);
@@ -23,20 +28,23 @@ export const CloudAppProvider = ({ children }) => {
     const [authLoading, setAuthLoading] = useState(isSupabaseReady());
     const [authError, setAuthError] = useState('');
     const [syncError, setSyncError] = useState('');
+    const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+    const [lastSyncedAt, setLastSyncedAt] = useState(null);
     const [isLive, setIsLive] = useState(false);
     const current = useRef(null);
     const authVersion = useRef(0);
     const loadVersion = useRef(0);
 
     const clearData = useCallback(() => {
+        clearReceiptCache();
         loadVersion.current++;
         setCustomers([]); setTransactions([]); setDeletedTransactions([]); setChitSchemes([]);
-        setSyncError(''); setIsLive(false);
+        setSyncError(''); setIsLive(false); setLastSyncedAt(null);
     }, []);
 
     const refresh = useCallback(async () => {
         const session = current.current;
-        if (!session) return;
+        if (!session || !navigator.onLine) return;
         const version = ++loadVersion.current;
         try {
             const [cs, txs, schemes, profiles] = await Promise.all([
@@ -44,25 +52,30 @@ export const CloudAppProvider = ({ children }) => {
                 allRows('chit_schemes', session.orgId), allRows('profiles', session.orgId),
             ]);
             if (version !== loadVersion.current || current.current !== session) return;
+            const self = profiles.find(p => p.id === session.userId);
+            if (!self || self.org_id !== session.orgId || self.role !== session.role) {
+                current.current = null; setAuthSession(null); clearData();
+                setAuthError('Your ledger access changed. Please sign in again.'); return;
+            }
             const names = Object.fromEntries(profiles.map(p => [p.id, p.display_name || p.role]));
             const mapTx = t => ({ ...dbTxToLocal(t), added_by: names[t.added_by] || t.added_by, deleted_at: t.deleted_at });
             setCustomers(cs.map(dbCustToLocal));
             setTransactions(txs.filter(t => !t.deleted_at).map(mapTx).sort((a,b) => a.createdAt-b.createdAt));
             setDeletedTransactions(txs.filter(t => t.deleted_at).map(mapTx));
             setChitSchemes(schemes.map(s => s.name));
-            setSyncError('');
+            setSyncError(''); setLastSyncedAt(Date.now()); setIsOnline(navigator.onLine);
         } catch (error) {
             if (version === loadVersion.current && current.current === session) setSyncError(error.message);
         }
-    }, []);
+    }, [clearData]);
 
     useEffect(() => {
         if (!isSupabaseReady()) return;
         let disposed = false;
         const timers = new Set();
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const handleSession = (event, session) => {
             // Never await another Supabase request inside its auth callback.
-            if (event === 'TOKEN_REFRESHED' && current.current) return;
+            if (current.current?.userId === session?.user.id && ['TOKEN_REFRESHED','SIGNED_IN','RECOVERED'].includes(event)) return;
             const version = ++authVersion.current;
             current.current = null;
             setAuthSession(null); clearData(); setAuthError('');
@@ -89,37 +102,48 @@ export const CloudAppProvider = ({ children }) => {
                 }
             }, 0);
             timers.add(timer);
-        });
-        return () => { disposed = true; authVersion.current++; timers.forEach(clearTimeout); subscription.unsubscribe(); };
+        };
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleSession);
+        const recover = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!disposed && !current.current && session) handleSession('RECOVERED',session);
+        };
+        window.addEventListener('online',recover);
+        return () => { disposed = true; timers.forEach(clearTimeout); subscription.unsubscribe(); window.removeEventListener('online',recover); };
     }, [clearData, refresh]);
 
     const orgId = authSession?.orgId || null;
     useEffect(() => {
         if (!orgId) return;
-        let timer;
+        let timer, disposed = false;
         const reload = () => { clearTimeout(timer); timer = setTimeout(refresh, 350); };
         const channel = supabase.channel(`oneledger-${orgId}`);
         for (const table of ['customers','transactions','chit_schemes']) {
             channel.on('postgres_changes', { event:'*', schema:'public', table, filter:`org_id=eq.${orgId}` }, reload);
         }
         channel.subscribe(status => {
-            setIsLive(status === 'SUBSCRIBED');
+            if (disposed) return;
+            setIsLive(navigator.onLine && status === 'SUBSCRIBED');
             if (status === 'SUBSCRIBED') reload();
         });
         const poll = setInterval(reload, 60000);
         const onFocus = () => { if (document.visibilityState === 'visible') reload(); };
-        window.addEventListener('online', reload);
+        const onOnline = () => { setIsOnline(true); reload(); };
+        const onOffline = () => { setIsOnline(false); setIsLive(false); };
+        window.addEventListener('online', onOnline);
+        window.addEventListener('offline', onOffline);
         window.addEventListener('focus', onFocus);
         document.addEventListener('visibilitychange', onFocus);
         return () => {
-            clearTimeout(timer); clearInterval(poll); supabase.removeChannel(channel);
-            window.removeEventListener('online', reload); window.removeEventListener('focus', onFocus);
+            disposed = true; clearTimeout(timer); clearInterval(poll); supabase.removeChannel(channel);
+            window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); window.removeEventListener('focus', onFocus);
             document.removeEventListener('visibilitychange', onFocus);
         };
     }, [orgId, refresh]);
 
     const writer = () => {
         const session = current.current;
+        if (!navigator.onLine) throw new Error('You are offline. Reconnect and retry; this transaction has not been confirmed.');
         if (!session || !['owner','staff'].includes(session.role)) throw new Error('Write access required.');
         return session;
     };
@@ -142,7 +166,7 @@ export const CloudAppProvider = ({ children }) => {
     };
     const addTransaction = async data => {
         writer();
-        const { data: row, error } = await supabase.rpc('record_transaction', { p_id: data.id || crypto.randomUUID(), p_entry: data });
+        const { data: row, error } = await supabase.rpc('record_transaction', { p_id: data.id || crypto.randomUUID(), p_entry: { ...data, images: receiptReferences(data.images) } });
         if (error) throw error;
         await refresh();
         return dbTxToLocal(row);
@@ -165,8 +189,8 @@ export const CloudAppProvider = ({ children }) => {
         if (error) setAuthError('Sign-out could not be confirmed. Please retry when connected.');
     };
     return <AppContext.Provider value={{
-        customers, transactions, deletedTransactions, chitSchemes, authSession, authLoading, authError,
-        syncError, isLive, orgId, signOut, refresh,
+        customers, transactions: visibleTransactions(transactions, authSession?.role, now), deletedTransactions: authSession?.role === 'owner' ? deletedTransactions : [], chitSchemes, authSession, authLoading, authError,
+        syncError, isLive, isOnline, lastSyncedAt, orgId, signOut, refresh,
         getCustomer:id => customers.find(c => c.id===id), getCustomerByMobile:mobile => customers.find(c => c.mobile===mobile),
         addCustomer, updateCustomer, addTransaction, deleteTransaction, addChitScheme,
         updateCustomerDueDate:(id,due_date) => updateCustomer(id,{due_date}),

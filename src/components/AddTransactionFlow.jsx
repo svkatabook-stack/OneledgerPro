@@ -4,7 +4,7 @@ import {
     CalendarDays, Phone, ArrowRight, ChevronLeft,
     TrendingUp, TrendingDown
 } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/appState';
 import ReceiptModal from './ReceiptModal';
 import { compressImage, uploadToCloudinary } from '../utils/imageUtils';
 import './TransactionPopup.css';

@@ -65,7 +65,8 @@ Deno.serve(async (req) => {
 
     // Sheet 1: Transactions for the period
     const txRows = allTxs.map(t => ({
-        'Date':           t.date,
+        'Bill Number': t.bill_number || '',
+                    'Date':           t.date,
         'Time':           t.time ? String(t.time).substring(0, 5) : '',
         'Customer':       custMap[t.customer_id] || '',
         'Category':       t.category,

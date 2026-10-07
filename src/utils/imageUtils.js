@@ -7,6 +7,7 @@
  * the original main-thread canvas path transparently.
  */
 
+import { uploadReceipt } from '../lib/receiptImages';
 import { isLocalMode } from '../lib/runtime';
 import CompressWorker from '../workers/imageCompress.worker.js?worker';
 
@@ -100,13 +101,11 @@ const compressWithWorker = (file) =>
 export const compressImage = (file) =>
     workerSupported ? compressWithWorker(file) : compressOnMainThread(file);
 
-// ── Cloudinary upload (unchanged) ────────────────────────────────────────────
+// ── Receipt upload (server-signed in cloud mode) ────────────────────────────────────────────
 export const uploadToCloudinary = async (blob) => {
-    const cloudName    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME    || 'demo';
-    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
 
     // Mock upload for demo / local dev
-    if (isLocalMode || cloudName === 'demo' || uploadPreset === 'unsigned_preset') {
+    if (isLocalMode) {
         return new Promise((res, rej) => {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -124,28 +123,5 @@ export const uploadToCloudinary = async (blob) => {
         });
     }
 
-    const formData = new FormData();
-    formData.append('file',          blob, 'receipt.webp');
-    formData.append('upload_preset', uploadPreset);
-    formData.append('folder',        'oneledger');
-
-    try {
-        const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-            { method: 'POST', body: formData }
-        );
-        const data = await response.json();
-        if (data.secure_url) {
-            return {
-                id:   data.public_id,
-                url:  data.secure_url,
-                name: data.original_filename || 'receipt.webp',
-                size: data.bytes,
-            };
-        }
-        throw new Error(data.error?.message || 'Upload failed');
-    } catch (error) {
-        console.error('Cloudinary upload error:', error);
-        throw error;
-    }
+    return uploadReceipt(blob);
 };

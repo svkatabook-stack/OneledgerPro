@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, UserCheck, Eye, EyeOff, Loader, ArrowLeft } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/appState';
 import { supabase, isSupabaseReady } from '../lib/supabase';
 import { isLocalMode, LOCAL_PASSCODES } from '../lib/runtime';
+import { ROLE_EMAILS } from '../lib/roleAuth';
 import './Login.css';
 
 const ROLE_CONFIG = {
@@ -13,8 +14,7 @@ const ROLE_CONFIG = {
 
 const Login = () => {
     const { setAuthSession, authError } = useAppContext();
-    const [email, setEmail] = useState('s.vkatabook@gmail.com');
-    const [selectedRole, setSelectedRole] = useState(isLocalMode ? null : 'owner');
+    const [selectedRole, setSelectedRole] = useState(null);
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -53,7 +53,7 @@ const Login = () => {
 
             if (!isLocalMode) {
                 if (!isSupabaseReady()) throw new Error('Cloud connection is not configured.');
-                const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+                const { error } = await supabase.auth.signInWithPassword({ email: ROLE_EMAILS[selectedRole], password });
                 if (error) throw error;
                 return;
             }
@@ -92,6 +92,7 @@ const Login = () => {
                 {isLocalMode && <div style={{ marginBottom: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
                     Demo passcodes: <strong>owner-local</strong>, <strong>staff-local</strong>, <strong>view-local</strong>
                 </div>}
+                {authError && <div className="login-error" role="alert">{authError}</div>}
                 {/* Step 1: Role selector */}
                 {!selectedRole && (
                     <div>
@@ -116,14 +117,13 @@ const Login = () => {
                 {selectedRole && (
                     <div>
                         <div className="login-step-header">
-                            {isLocalMode && <button className="login-back-btn" onClick={handleBack} type="button">
+                            {<button className="login-back-btn" onClick={handleBack} type="button">
                                 <ArrowLeft size={18} />
                             </button>}
-                            <span className="login-step-title">{isLocalMode ? roleConfig.title : 'Sign in to your ledger'}</span>
+                            <span className="login-step-title">{roleConfig.title}</span>
                         </div>
 
                         <form onSubmit={handleLogin} className="login-form">
-                            {!isLocalMode && <div className="input-group"><input type="email" aria-label="Email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required /></div>}
                             <div className="input-group" style={{ position: 'relative' }}>
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -147,7 +147,7 @@ const Login = () => {
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
-                            {(error || authError) && <div className="login-error" role="alert">{error || authError}</div>}
+                            {error && <div className="login-error" role="alert">{error}</div>}
 
                             <button type="submit" className="login-btn" disabled={loading || !password}>
                                 {loading
@@ -157,7 +157,7 @@ const Login = () => {
                             </button>
                         </form>
 
-                        <p className="login-footer-hint">{isLocalMode ? 'Local demo access' : 'Use the password set for your Supabase Auth account.'}</p>
+                        <p className="login-footer-hint">{isLocalMode ? 'Local demo access' : 'Enter the password provided by your owner.'}</p>
                     </div>
                 )}
 

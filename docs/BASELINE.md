@@ -34,4 +34,4 @@ Cloud sign-in is deliberately unavailable until the new authentication integrati
 
 ## Subsequent cloud foundation
 
-The original import boundary above is historical. The cloud implementation now uses a separate provider, real Supabase email/password sign-in, confirmed writes, and a tested fresh-project RLS schema with atomic transaction/delete RPCs. See CLOUD_SETUP.md. The legacy AppContext remains the local/demo provider; its old cloud code is not used by cloud mode. UI unit/export consistency and Cloudflare storage remain follow-up work.
+The original import boundary above is historical. The cloud implementation now uses a separate provider, real Supabase email/password sign-in, confirmed writes, and a tested fresh-project RLS schema with atomic transaction/delete RPCs. See CLOUD_SETUP.md. The legacy AppContext remains the local/demo provider; its old cloud code is not used by cloud mode. This paragraph is historical. Cloudinary storage is now implemented; see CLOUDINARY_SETUP.md and RELEASE_20261007.md for current status.
