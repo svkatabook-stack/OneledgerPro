@@ -81,4 +81,3 @@ export const STORAGE_KEYS = [
 ];
 
 export const MAX_CACHED_TRANSACTIONS = 1000;
-
