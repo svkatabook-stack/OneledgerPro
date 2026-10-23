@@ -1,9 +1,10 @@
+import EditTransaction from '../components/EditTransaction';
 import { useClock } from '../lib/useClock';
 import ReceiptImage from '../components/ReceiptImage';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/appState';
-import { Search, Camera, Trash2, ArrowLeft, Download, TrendingUp, TrendingDown, X, User } from 'lucide-react';
+import { Search, Camera, Pencil, Trash2, ArrowLeft, Download, TrendingUp, TrendingDown, X, User } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './Transactions.css';
@@ -126,6 +127,8 @@ const buildCustomerSheets = (custTxs, categories) => {
 const Transactions = () => {
     const { transactions, customers, deleteTransaction, deletedTransactions, authSession } = useAppContext();
     const navigate = useNavigate();
+    const [editing, setEditing] = useState(null);
+    const [editSuccess, setEditSuccess] = useState('');
 
     // Top-level view: 'customer' | 'global'
     const [viewMode,   setViewMode]   = useState('customer');
@@ -407,6 +410,8 @@ const Transactions = () => {
     return (
         <div className="tx-container animate-fade-in" style={{ paddingBottom: '90px' }}>
 
+            {editSuccess && <div className="tx-edit-success" role="status">{editSuccess}</div>}
+            {editing && isOwner && <EditTransaction transaction={editing} onClose={() => setEditing(null)} onSaved={synced => { setEditing(null); setEditSuccess(synced === false ? 'Correction saved on the server. Reconnect or refresh to load the updated balances.' : 'Correction saved. Customer and ledger balances are updated.'); }} />}
             {/* Header */}
             <div className="tx-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -612,7 +617,8 @@ const Transactions = () => {
                                         <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t.added_by || '—'}</td>
                                         {isOwner && (
                                             <td onClick={e => e.stopPropagation()}>
-                                                <button className="btn-delete-icon" onClick={() => handleDelete(t.id)} title="Delete"><Trash2 size={15} /></button>
+                                                <button className="tx-edit-button" onClick={() => { setEditSuccess(''); setEditing(t); }} title="Edit transaction"><Pencil size={14} /> Edit</button>
+                                            <button className="btn-delete-icon" onClick={() => handleDelete(t.id)} title="Delete"><Trash2 size={15} /></button>
                                             </td>
                                         )}
                                     </tr>
@@ -885,6 +891,7 @@ const Transactions = () => {
                                     <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t.added_by || '—'}</td>
                                     {isOwner && (
                                         <td onClick={e => e.stopPropagation()}>
+                                            <button className="tx-edit-button" onClick={() => { setEditSuccess(''); setEditing(t); }} title="Edit transaction"><Pencil size={14} /> Edit</button>
                                             <button className="btn-delete-icon" onClick={() => handleDelete(t.id)} title="Delete"><Trash2 size={15} /></button>
                                         </td>
                                     )}

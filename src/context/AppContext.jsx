@@ -1,3 +1,4 @@
+import { editTransaction } from '../lib/editTransaction';
 import { useClock } from '../lib/useClock';
 import { visibleTransactions } from '../lib/roleAccess';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -252,6 +253,12 @@ export const AppProvider = ({ children }) => {
         return entry;
     };
 
+    const updateTransaction = (id, changes, expectedRevision) => {
+        const result = editTransaction({ transactions, deletedTransactions, customers,
+            role: authSession?.role, id, changes, expectedRevision });
+        setCustomers(result.customers); setTransactions(result.transactions);
+    };
+
     const deleteTransaction = (id) => {
         const tx = transactions.find(t => t.id === id);
         if (!tx) return;
@@ -443,7 +450,7 @@ export const AppProvider = ({ children }) => {
         isLive: true,  // false = Realtime offline (show reconnecting indicator in UI)
         signOut,
         addCustomer, getCustomer, getCustomerByMobile, updateCustomer,
-        addTransaction, deleteTransaction, updateCustomerDueDate,
+        addTransaction, updateTransaction, deleteTransaction, updateCustomerDueDate,
         chitSchemes, addChitScheme, removeChitScheme,
         seedDummyData,
     };

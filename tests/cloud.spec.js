@@ -187,7 +187,42 @@ for (const role of ['staff','view']) test(`${role} cannot see old history, delet
  await page.goto('/settings'); await expect(page.getByRole('button',{name:'Change',exact:true})).toHaveCount(0);
  if(role==='view') { await page.goto('/customers'); await page.getByPlaceholder('Search by name or mobile...').fill('Cloud'); await expect(page.getByTitle('Edit customer')).toBeDisabled(); }
  state.role='view'; if(role==='view') state.role='staff';
- await page.getByRole('button',{name:'Refresh data'}).click();
+ // A pending refresh may detect the role change before the manual refresh click.
+ await page.getByRole('button',{name:'Refresh data'}).click({timeout:1000}).catch(async () => {
+  await expect(page.getByRole('alert')).toContainText('access changed');
+ });
  await expect(page.getByRole('alert')).toContainText('access changed');
  await expect(page.locator('.app-header')).toHaveCount(0);
+});
+
+test('owner correction sends version and stable retry ID, and displays protected history', async({page})=>{
+ const state=await mockCloud(page); const id='40000000-0000-0000-0000-000000000099';
+ state.balance=100;
+ state.txs=[{id,org_id:orgId,customer_id:customerId,category:'RETAIL',sub_type:'CASH',type:'CASH',direction:'IN',jama:100,nave:0,date:'2026-10-23',time:'12:00:00',current_balance:0,new_balance:100,revision:0,created_at:new Date().toISOString(),images:[]}];
+ const requests=[];
+ await page.route('**/rest/v1/transaction_corrections?*',route=>route.fulfill({contentType:'application/json',body:JSON.stringify([{changed_at:new Date().toISOString(),actor_label:'Owner',actor_id:userId,reason:'Previous correction',before_values:{jama:120,nave:0,direction:'IN'},after_values:{jama:100,nave:0,direction:'IN'}}])}));
+ await page.route('**/rest/v1/rpc/edit_transaction', async route=>{
+  requests.push(route.request().postDataJSON());
+  if(requests.length===1) return route.fulfill({status:503,contentType:'application/json',body:'{"message":"Try again"}'});
+  state.balance=80; state.txs[0]={...state.txs[0],jama:80,new_balance:80,revision:1};
+  return route.fulfill({contentType:'application/json',body:JSON.stringify(state.txs[0])});
+ });
+ await login(page); await expect(page.locator('.app-header')).toBeVisible();
+ await page.goto('/ledger'); await page.getByRole('button',{name:'Global',exact:true}).click();
+ await page.getByRole('button',{name:'Edit',exact:true}).click();
+ const dialog=page.getByRole('dialog');
+ await dialog.getByText('Correction history (1)').click();
+ await expect(dialog).toContainText('Previous correction');
+ await expect(dialog).toContainText(userId);
+ await dialog.getByLabel('Amount (₹)',{exact:true}).fill('80');
+ await dialog.getByLabel('Reason for correction').fill('Paper bill correction');
+ await dialog.getByRole('button',{name:'Save correction'}).click();
+ await expect(dialog.getByRole('alert')).toContainText('Try again');
+ await dialog.getByRole('button',{name:'Save correction'}).click();
+ await expect(page.locator('.tx-edit-success')).toContainText('Correction saved');
+ expect(requests).toHaveLength(2);
+ expect(requests[0].p_change_id).toBe(requests[1].p_change_id);
+ expect(requests[1].p_expected_revision).toBe(0);
+ expect(requests[1].p_changes.amount).toBe('80');
+ await expect(page.locator('tbody')).toContainText('₹80.00');
 });

@@ -82,3 +82,29 @@ See [HANDOVER.md](HANDOVER.md) for the setup checklist and [docs/BASELINE.md](do
 - `src/lib/supabase.js`: isolated Supabase client configuration.
 - `src/utils/imageUtils.js` and `src/workers/`: receipt-image compression and storage adapter.
 - `supabase/`: new database schema, owner seed, permission tests, email function, and cron setup.
+
+### Owner transaction corrections
+
+Owner → Ledger → Global (or select a customer) → Edit → Correction history.
+Owners can correct amount/weight, direction, optional bill number, bill amount,
+date and notes. Customer, account, photos and posting order remain unchanged.
+Each correction stores before/after values, reason, timestamp and the authenticated
+account in an owner-readable history table; shared role accounts do not identify
+an individual employee. Local demo history is browser-only.
+
+`supabase/migrations/202610230001_transaction_corrections.sql` adds the atomic
+owner-only RPC, revision conflict checks, retry operation IDs and protected audit
+table. Apply this migration before deploying this branch. Applied and verified on
+project `zlcittlgjvsiwstkhjvv` on 2026-10-23 via SQL Editor; do not run it again.
+No customer transaction was edited during setup. History starts with future edits.
+
+Corrections and deletes lock the customer first, adjust the account balance, and
+recompute its active running balances in original creation order. All changes
+commit together. Changing a displayed date does not reorder postings. A failed
+refresh after a confirmed save is reported as saved with a refresh warning.
+
+Validation: `supabase/tests/transaction_corrections.sql` runs only in an isolated
+PostgreSQL database, with fixtures rolled back. Covers all eight account types,
+retries, revision conflicts, invalid inputs, duplicates, immutable audit history,
+role/org isolation, and deletion after a correction. Cloud browser tests use
+mocked Supabase responses and do not edit production financial data.

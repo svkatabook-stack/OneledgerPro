@@ -64,8 +64,10 @@ export const CloudAppProvider = ({ children }) => {
             setDeletedTransactions(txs.filter(t => t.deleted_at).map(mapTx));
             setChitSchemes(schemes.map(s => s.name));
             setSyncError(''); setLastSyncedAt(Date.now()); setIsOnline(navigator.onLine);
+            return true;
         } catch (error) {
             if (version === loadVersion.current && current.current === session) setSyncError(error.message);
+            return false;
         }
     }, [clearData]);
 
@@ -172,6 +174,24 @@ export const CloudAppProvider = ({ children }) => {
         await refresh();
         return dbTxToLocal(row);
     };
+    const loadCorrectionHistory = useCallback(async id => {
+        const session = current.current;
+        if (session?.role !== 'owner') throw new Error('Owner access required.');
+        const { data, error } = await supabase.from('transaction_corrections').select('*')
+            .eq('transaction_id', id).eq('org_id', session.orgId).order('revision');
+        if (error) throw error;
+        return data.map(row => ({ at: row.changed_at, by: row.actor_label,
+            accountId: row.actor_id, reason: row.reason, before: row.before_values, after: row.after_values }));
+    }, []);
+    const updateTransaction = async (id, changes, expectedRevision, changeId) => {
+        if (writer().role !== 'owner') throw new Error('Owner access required.');
+        const { error } = await supabase.rpc('edit_transaction', {
+            p_id: id, p_expected_revision: expectedRevision, p_change_id: changeId, p_changes: changes,
+        });
+        if (error?.code === '23505') throw new Error('Bill number already exists. Use a different number or leave it blank.');
+        if (error) throw error;
+        return (await refresh()) === true;
+    };
     const deleteTransaction = async id => {
         if (writer().role !== 'owner') throw new Error('Owner access required.');
         const { error } = await supabase.rpc('delete_transaction', { p_transaction_id: id });
@@ -193,7 +213,7 @@ export const CloudAppProvider = ({ children }) => {
         customers, transactions: visibleTransactions(transactions, authSession?.role, now), deletedTransactions: authSession?.role === 'owner' ? deletedTransactions : [], chitSchemes, authSession, authLoading, authError,
         syncError, isLive, isOnline, lastSyncedAt, orgId, signOut, refresh,
         getCustomer:id => customers.find(c => c.id===id), getCustomerByMobile:mobile => customers.find(c => c.mobile===mobile),
-        addCustomer, updateCustomer, addTransaction, deleteTransaction, addChitScheme,
+        addCustomer, updateCustomer, addTransaction, updateTransaction, loadCorrectionHistory, deleteTransaction, addChitScheme,
         updateCustomerDueDate:(id,due_date) => updateCustomer(id,{due_date}),
         seedDummyData:() => { throw new Error('Sample data is available in local mode only.'); },
     }}>{children}</AppContext.Provider>;

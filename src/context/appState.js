@@ -29,6 +29,7 @@ export const dbCustToLocal = (row) => ({
 
 export const dbTxToLocal = (row) => ({
     id: row.id,
+    revision: row.revision || 0,
     bill_number: row.bill_number || '',
     cid: row.customer_id,
     type: row.type,
