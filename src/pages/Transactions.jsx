@@ -1,3 +1,4 @@
+import CorrectionHistory from '../components/CorrectionHistory';
 import EditTransaction from '../components/EditTransaction';
 import { useClock } from '../lib/useClock';
 import ReceiptImage from '../components/ReceiptImage';
@@ -420,7 +421,7 @@ const Transactions = () => {
                     </button>
                     <div>
                         <h2 style={{ margin: 0 }}>
-                            {viewMode === 'customer' ? 'Ledger' : 'Global Ledger'}
+                            {viewMode === 'history' ? 'Correction history' : viewMode === 'deleted' ? 'Recently Deleted' : viewMode === 'customer' ? 'Ledger' : 'Global Ledger'}
                             {viewMode === 'customer' && custFilter && (
                                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#22c55e', marginLeft: '0.5rem' }}>
                                     · {custFilter.name}
@@ -428,7 +429,7 @@ const Transactions = () => {
                             )}
                         </h2>
                         <p style={{ margin: 0 }}>
-                            {viewMode === 'customer'
+                            {viewMode === 'history' ? 'Review all transaction corrections' : viewMode === 'deleted' ? 'Deleted transactions' : viewMode === 'customer'
                                 ? `${filtered.length} of ${baseTransactions.length} transactions`
                                 : `${globalFiltered.length} of ${baseTransactions.length} transactions`}
                             {isRestrictedView && <span style={{ color: '#a5b4fc', marginLeft: '0.4rem', fontSize: '0.75rem' }}>· last 24h</span>}
@@ -449,7 +450,7 @@ const Transactions = () => {
 
             {/* View mode tabs */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                {[{ key: 'customer', label: 'Customer' }, { key: 'global', label: 'Global' }].map(({ key, label }) => (
+                {[{ key: 'customer', label: 'Customer' }, { key: 'global', label: 'Global' }, ...(isOwner ? [{ key: 'history', label: 'Correction history' }] : [])].map(({ key, label }) => (
                     <button
                         key={key}
                         onClick={() => setViewMode(key)}
@@ -472,6 +473,8 @@ const Transactions = () => {
                 )}
             </div>
 
+            {viewMode === 'history' && isOwner && <CorrectionHistory />}
+
             {/* Staff / View — 24h restriction notice */}
             {isRestrictedView && (
                 <div style={{ background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.22)', borderRadius: '10px', padding: '0.5rem 0.85rem', marginBottom: '0.75rem', fontSize: '0.78rem', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -481,7 +484,7 @@ const Transactions = () => {
             )}
 
             {/* ── GLOBAL VIEW ───────────────────────────────────────────── */}
-            {viewMode !== 'deleted' && <div className="search-bar tx-bill-filter" style={{marginBottom:12}}>
+            {['customer', 'global'].includes(viewMode) && <div className="search-bar tx-bill-filter" style={{marginBottom:12}}>
                 <label htmlFor="bill-search">Bill Number</label>
                 <input id="bill-search" placeholder="e.g. OLP-000001" value={billSearch} onChange={e => setBillSearch(e.target.value)} />
                 {billSearch && <button className="tx-clear-bill" type="button" onClick={() => setBillSearch('')}>Clear bill filter</button>}

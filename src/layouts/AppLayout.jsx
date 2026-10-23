@@ -153,9 +153,9 @@ const AppLayout = () => {
             {/* Main Content Area */}
             <main className="app-main">
                 <div className="content-container animate-fade-in">
-                    {!isLocalMode && <div role="status" style={{padding:8,fontSize:'0.8rem',color:'var(--text-muted)'}}>
+                    {!isLocalMode && <div role="status" className="cloud-sync-status">
                         {!isOnline ? 'Offline — reconnect before saving. Your open form is kept in this tab.' : syncError ? 'Refresh failed — showing last loaded data.' : lastSyncedAt ? (isLive ? 'Connected' : 'Connected — periodic refresh') : 'Loading cloud data…'}
-                        {isOnline && <button type="button" onClick={refresh} style={{marginLeft:8}}>Refresh data</button>}
+                        {isOnline && <button type="button" className="cloud-refresh-button" onClick={refresh}>Refresh data</button>}
                     </div>}
                     {syncError && <div role="alert" style={{ padding: 12, color: '#fca5a5' }}>Cloud refresh failed: {syncError}. Showing the last loaded data.</div>}
                     <Outlet />

@@ -85,7 +85,7 @@ See [HANDOVER.md](HANDOVER.md) for the setup checklist and [docs/BASELINE.md](do
 
 ### Owner transaction corrections
 
-Owner → Ledger → Global (or select a customer) → Edit → Correction history.
+Owner → Ledger → Correction history lists all corrections, newest first (50 per page), including deleted transactions. Per-transaction history is also available under Edit → Correction history.
 Owners can correct amount/weight, direction, optional bill number, bill amount,
 date and notes. Customer, account, photos and posting order remain unchanged.
 Each correction stores before/after values, reason, timestamp and the authenticated

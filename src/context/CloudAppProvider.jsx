@@ -183,6 +183,16 @@ export const CloudAppProvider = ({ children }) => {
         return data.map(row => ({ at: row.changed_at, by: row.actor_label,
             accountId: row.actor_id, reason: row.reason, before: row.before_values, after: row.after_values }));
     }, []);
+    const loadCorrectionsPage = useCallback(async (offset, size) => {
+        const session = current.current;
+        if (session?.role !== 'owner') throw new Error('Owner access required.');
+        const { data, error } = await supabase.from('transaction_corrections').select('*')
+            .eq('org_id', session.orgId).order('changed_at', { ascending: false }).order('id', { ascending: false })
+            .range(offset, offset + size - 1);
+        if (error) throw error;
+        return data.map(row => ({ id: row.id, transactionId: row.transaction_id, at: row.changed_at,
+            by: row.actor_label, accountId: row.actor_id, reason: row.reason, before: row.before_values, after: row.after_values }));
+    }, []);
     const updateTransaction = async (id, changes, expectedRevision, changeId) => {
         if (writer().role !== 'owner') throw new Error('Owner access required.');
         const { error } = await supabase.rpc('edit_transaction', {
@@ -213,7 +223,7 @@ export const CloudAppProvider = ({ children }) => {
         customers, transactions: visibleTransactions(transactions, authSession?.role, now), deletedTransactions: authSession?.role === 'owner' ? deletedTransactions : [], chitSchemes, authSession, authLoading, authError,
         syncError, isLive, isOnline, lastSyncedAt, orgId, signOut, refresh,
         getCustomer:id => customers.find(c => c.id===id), getCustomerByMobile:mobile => customers.find(c => c.mobile===mobile),
-        addCustomer, updateCustomer, addTransaction, updateTransaction, loadCorrectionHistory, deleteTransaction, addChitScheme,
+        addCustomer, updateCustomer, addTransaction, updateTransaction, loadCorrectionHistory, loadCorrectionsPage, deleteTransaction, addChitScheme,
         updateCustomerDueDate:(id,due_date) => updateCustomer(id,{due_date}),
         seedDummyData:() => { throw new Error('Sample data is available in local mode only.'); },
     }}>{children}</AppContext.Provider>;

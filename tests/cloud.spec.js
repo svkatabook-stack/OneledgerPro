@@ -184,6 +184,7 @@ for (const role of ['staff','view']) test(`${role} cannot see old history, delet
  await expect(page.locator('tbody')).not.toContainText('OLP-000001');
  await expect(page.locator('tbody')).toContainText('OLP-000002');
  await page.goto('/ledger'); await expect(page.getByRole('button',{name:'Recently Deleted'})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Correction history',exact:true})).toHaveCount(0);
  await page.goto('/settings'); await expect(page.getByRole('button',{name:'Change',exact:true})).toHaveCount(0);
  if(role==='view') { await page.goto('/customers'); await page.getByPlaceholder('Search by name or mobile...').fill('Cloud'); await expect(page.getByTitle('Edit customer')).toBeDisabled(); }
  state.role='view'; if(role==='view') state.role='staff';
@@ -225,4 +226,23 @@ test('owner correction sends version and stable retry ID, and displays protected
  expect(requests[1].p_expected_revision).toBe(0);
  expect(requests[1].p_changes.amount).toBe('80');
  await expect(page.locator('tbody')).toContainText('₹80.00');
+});
+
+test('owner history tab lists corrections including deleted transactions and pages through them', async({page})=>{
+ const state=await mockCloud(page); const tx=fixtureTx('HISTORY-1'); tx.deleted_at=new Date().toISOString(); state.txs=[tx];
+ const history=Array.from({length:51},(_,i)=>({id:`change-${i}`,transaction_id:tx.id,changed_at:new Date(Date.now()-i*1000).toISOString(),actor_label:'Owner',actor_id:userId,reason:`Correction ${i+1}`,before_values:{jama:100,nave:0,bill_number:'OLD-1'},after_values:{jama:80,nave:0,bill_number:'HISTORY-1'}}));
+ await page.route('**/rest/v1/transaction_corrections?*',route=>{
+  const url=new URL(route.request().url()); const start=Number(url.searchParams.get('offset')||0);
+  return route.fulfill({contentType:'application/json',body:JSON.stringify(history.slice(start,start+51))});
+ });
+ await login(page); await expect(page.locator('.app-header')).toBeVisible();
+ await page.goto('/ledger'); await page.getByRole('button',{name:'Correction history',exact:true}).click();
+ await expect(page.locator('.correction-card').first()).toContainText('Correction 1');
+ await expect(page.locator('.correction-card')).toHaveCount(50);
+ await expect(page.locator('.correction-card').first()).toContainText('Deleted transaction');
+ await expect(page.locator('.correction-card').first()).toContainText('Cloud Customer');
+ await page.getByRole('button',{name:'Next',exact:true}).click();
+ await expect(page.locator('.correction-card').first()).toContainText('Correction 51');
+ await expect(page.locator('.correction-card')).toHaveCount(1);
+ await expect(page.getByRole('button',{name:'Next',exact:true})).toBeDisabled();
 });
