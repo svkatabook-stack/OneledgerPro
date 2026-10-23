@@ -80,8 +80,8 @@ const buildCustomerSheets = (custTxs, categories) => {
             // Compute running balance
             let running = 0;
             const unit  = isGrams ? 'g' : '₹';
-            const gotH  = isGrams ? `You GOT (${unit})` : `You GOT (${unit})`;
-            const gaveH = isGrams ? `You GAVE (${unit})` : `You GAVE (${unit})`;
+            const gotH  = isGrams ? `You Got (Jama) (${unit})` : `You Got (Jama) (${unit})`;
+            const gaveH = isGrams ? `You Gave (Nave) (${unit})` : `You Gave (Nave) (${unit})`;
             const balH  = `Balance (${unit})`;
 
             const data = rows.map(t => {
@@ -314,8 +314,8 @@ const Transactions = () => {
             'Bill Number': t.bill_number || '', 'Date': t.date, 'Time': t.time, 'Category': t.category || '',
             'Sub-type': t.sub_type || '', 'Chit Scheme': t.chit_scheme || '',
             'Customer': t.customerName, 'Mobile': t.customerMobile,
-            'YOU GOT (₹)': t.jama > 0 ? fmt(t.jama) : '',
-            'YOU GAVE (₹)': t.nave > 0 ? fmt(t.nave) : '',
+            'You Got (Jama) (₹)': t.jama > 0 ? fmt(t.jama) : '',
+            'You Gave (Nave) (₹)': t.nave > 0 ? fmt(t.nave) : '',
             'Bill Amount (₹)': t.bill_amount ? fmt(t.bill_amount) : '',
             'Grams': t.grams ? fmtG(t.grams) : '',
             'Description': t.description || '', 'Added By': t.added_by || '',
@@ -328,8 +328,8 @@ const Transactions = () => {
             'Bill Number': t.bill_number || '', 'Date': t.date, 'Time': t.time, 'Category': t.category || '',
             'Metal Type': t.metal_type || (t.type === 'GOLD' ? 'GOLD' : t.type === 'SILVER' ? 'SILVER' : ''),
             'Customer': t.customerName, 'Mobile': t.customerMobile,
-            'YOU GOT (g)': t.jama > 0 ? fmtG(t.jama) : '',
-            'YOU GAVE (g)': t.nave > 0 ? fmtG(t.nave) : '',
+            'You Got (Jama) (g)': t.jama > 0 ? fmtG(t.jama) : '',
+            'You Gave (Nave) (g)': t.nave > 0 ? fmtG(t.nave) : '',
             'Bill Amount (₹)': t.bill_amount ? fmt(t.bill_amount) : '',
             'Description': t.description || '', 'Added By': t.added_by || '',
         }));
@@ -476,10 +476,10 @@ const Transactions = () => {
             )}
 
             {/* ── GLOBAL VIEW ───────────────────────────────────────────── */}
-            {viewMode !== 'deleted' && <div className="search-bar" style={{marginBottom:12}}>
+            {viewMode !== 'deleted' && <div className="search-bar tx-bill-filter" style={{marginBottom:12}}>
                 <label htmlFor="bill-search">Bill Number</label>
                 <input id="bill-search" placeholder="e.g. OLP-000001" value={billSearch} onChange={e => setBillSearch(e.target.value)} />
-                {billSearch && <button type="button" onClick={() => setBillSearch('')}>Clear bill filter</button>}
+                {billSearch && <button className="tx-clear-bill" type="button" onClick={() => setBillSearch('')}>Clear bill filter</button>}
             </div>}
 
             {viewMode === 'global' && (<>
@@ -541,32 +541,32 @@ const Transactions = () => {
                     {(globalStats.cashGot > 0 || globalStats.cashGave > 0) && (
                         <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase' }}>Cash</span>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>₹{fmt(globalStats.cashGot)}</span></div>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>₹{fmt(globalStats.cashGave)}</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got (Jama)</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>₹{fmt(globalStats.cashGot)}</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave (Nave)</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>₹{fmt(globalStats.cashGave)}</span></div>
                             <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">Net</span><span className="tx-stat-val" style={{ fontSize: '0.82rem', fontWeight: 700, color: globalStats.cashNet >= 0 ? '#10b981' : '#ef4444' }}>₹{fmt(Math.abs(globalStats.cashNet))} {globalStats.cashNet >= 0 ? 'CR' : 'DR'}</span></div>
                         </div>
                     )}
                     {(globalStats.goldGot > 0 || globalStats.goldGave > 0) && (
                         <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase' }}>Gold</span>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.goldGot)}g</span></div>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.goldGave)}g</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got (Jama)</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.goldGot)}g</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave (Nave)</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.goldGave)}g</span></div>
                             <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">Net</span><span className="tx-stat-val" style={{ fontSize: '0.82rem', fontWeight: 700, color: globalStats.goldNet >= 0 ? '#f59e0b' : '#ef4444' }}>{fmtG(Math.abs(globalStats.goldNet))}g {globalStats.goldNet >= 0 ? 'CR' : 'DR'}</span></div>
                         </div>
                     )}
                     {(globalStats.silverGot > 0 || globalStats.silverGave > 0) && (
                         <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Silver</span>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.silverGot)}g</span></div>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.silverGave)}g</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got (Jama)</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.silverGot)}g</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave (Nave)</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.silverGave)}g</span></div>
                             <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">Net</span><span className="tx-stat-val" style={{ fontSize: '0.82rem', fontWeight: 700, color: globalStats.silverNet >= 0 ? '#94a3b8' : '#ef4444' }}>{fmtG(Math.abs(globalStats.silverNet))}g {globalStats.silverNet >= 0 ? 'CR' : 'DR'}</span></div>
                         </div>
                     )}
                     {(globalStats.metalGot > 0 || globalStats.metalGave > 0) && (
                         <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase' }}>Metal</span>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.metalGot)}g</span></div>
-                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.metalGave)}g</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Got (Jama)</span><span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.metalGot)}g</span></div>
+                            <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">You Gave (Nave)</span><span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(globalStats.metalGave)}g</span></div>
                             <div className="tx-stat" style={{ textAlign: 'center' }}><span className="tx-stat-label">Net</span><span className="tx-stat-val" style={{ fontSize: '0.82rem', fontWeight: 700, color: globalStats.metalNet >= 0 ? '#a78bfa' : '#ef4444' }}>{fmtG(Math.abs(globalStats.metalNet))}g {globalStats.metalNet >= 0 ? 'CR' : 'DR'}</span></div>
                         </div>
                     )}
@@ -703,11 +703,11 @@ const Transactions = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                         <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase' }}>Cash</span>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Got</span>
+                            <span className="tx-stat-label">You Got (Jama)</span>
                             <span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>₹{fmt(tabStats.cashGot)}</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Gave</span>
+                            <span className="tx-stat-label">You Gave (Nave)</span>
                             <span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>₹{fmt(tabStats.cashGave)}</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
@@ -724,11 +724,11 @@ const Transactions = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                         <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase' }}>Gold</span>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Got</span>
+                            <span className="tx-stat-label">You Got (Jama)</span>
                             <span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(tabStats.goldGot)}g</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Gave</span>
+                            <span className="tx-stat-label">You Gave (Nave)</span>
                             <span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(tabStats.goldGave)}g</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
@@ -745,11 +745,11 @@ const Transactions = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                         <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Silver</span>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Got</span>
+                            <span className="tx-stat-label">You Got (Jama)</span>
                             <span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(tabStats.silverGot)}g</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Gave</span>
+                            <span className="tx-stat-label">You Gave (Nave)</span>
                             <span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(tabStats.silverGave)}g</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
@@ -766,11 +766,11 @@ const Transactions = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.4rem' }}>
                         <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase' }}>Metal</span>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Got</span>
+                            <span className="tx-stat-label">You Got (Jama)</span>
                             <span className="tx-stat-val text-green" style={{ fontSize: '0.82rem' }}>{fmtG(tabStats.metalGot)}g</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>
-                            <span className="tx-stat-label">You Gave</span>
+                            <span className="tx-stat-label">You Gave (Nave)</span>
                             <span className="tx-stat-val text-red" style={{ fontSize: '0.82rem' }}>{fmtG(tabStats.metalGave)}g</span>
                         </div>
                         <div className="tx-stat" style={{ textAlign: 'center' }}>

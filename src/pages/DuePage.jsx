@@ -209,7 +209,7 @@ const DuePage = () => {
         const add = (raw, category, subtype, unit, isGrams) => {
             const v = n(raw);
             if (Math.abs(v) < 0.0001) return;
-            rows.push({ direction: v > 0 ? 'You Got' : 'You Gave', category, subtype,
+            rows.push({ direction: v > 0 ? 'You Got (Jama)' : 'You Gave (Nave)', category, subtype,
                         amount: parseFloat(Math.abs(v).toFixed(isGrams ? 3 : 2)), unit });
         };
         if (cat === 'ALL' || cat === 'RETAIL')  { add(c.retailCash,    'Retail',  'Cash',   '₹',       false); add(c.retailGold,    'Retail',  'Gold',   'g Gold',   true); }
@@ -260,7 +260,7 @@ const DuePage = () => {
 
     // ── Dashboard export + bulk send ─────────────────────────────────────────
     const exportDashboardCSV = () => {
-        const headers = ['Customer', 'Mobile', 'Category', 'Type', 'You Got (JAMA)', 'You Gave (NAVE)', 'Net Balance', 'CR/DR'];
+        const headers = ['Customer', 'Mobile', 'Category', 'Type', 'You Got (Jama)', 'You Gave (Nave)', 'Net Balance', 'CR/DR'];
         const rows = dashboardData.flatMap(({ customer: c, rows }) =>
             rows.map(r => [c.name, c.mobile, r.category, r.type, r.jama, r.nave, Math.abs(r.net), r.net >= 0 ? 'CR' : 'DR'])
         );
@@ -335,7 +335,7 @@ const DuePage = () => {
                                 ? (custFilter ? custFilter.name : 'Select a customer')
                                 : viewMode === 'dashboard'
                                 ? `${dashboardData.length} customers with balance`
-                                : `${globalList.length} ${globalFilter === 'YOU_GAVE' ? 'you gave' : globalFilter === 'YOU_GOT' ? 'you got' : 'total'}`}
+                                : `${globalList.length} ${globalFilter === 'YOU_GAVE' ? 'You Gave (Nave)' : globalFilter === 'YOU_GOT' ? 'You Got (Jama)' : 'total'}`}
                         </p>
                     </div>
                 </div>
@@ -503,8 +503,8 @@ const DuePage = () => {
                                 const { youGot, youGave } = getBalSections(selectedCustomer, catTab);
                                 return (
                                     <>
-                                        <BalSection label="You Gave  ·  Customer owes shop" color="#ef4444" items={youGave} />
-                                        <BalSection label="You Got  ·  Shop holds for customer" color="#10b981" items={youGot} />
+                                        <BalSection label="You Gave (Nave)  ·  Customer owes shop" color="#ef4444" items={youGave} />
+                                        <BalSection label="You Got (Jama)  ·  Shop holds for customer" color="#10b981" items={youGot} />
                                         {youGot.length === 0 && youGave.length === 0 && (
                                             <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No outstanding balances for this category.</div>
                                         )}
@@ -523,8 +523,8 @@ const DuePage = () => {
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         {[
                             { key: 'ALL',      label: 'All',      color: '#6366f1' },
-                            { key: 'YOU_GAVE', label: 'You Gave', color: '#ef4444' },
-                            { key: 'YOU_GOT',  label: 'You Got',  color: '#10b981' },
+                            { key: 'YOU_GAVE', label: 'You Gave (Nave)', color: '#ef4444' },
+                            { key: 'YOU_GOT',  label: 'You Got (Jama)',  color: '#10b981' },
                         ].map(({ key, label, color }) => (
                             <button key={key} onClick={() => { setGlobalFilter(key); setExcludedIds(new Set()); }} style={{
                                 padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.82rem',
@@ -545,8 +545,8 @@ const DuePage = () => {
                                             : <CheckSquare size={17} className="text-blue" />}
                                     </th>
                                     <th>Customer</th>
-                                    <th>You Gave</th>
-                                    <th>You Got</th>
+                                    <th>You Gave (Nave)</th>
+                                    <th>You Got (Jama)</th>
                                     <th>Due Date</th>
                                     <th>Actions</th>
                                 </tr>
@@ -618,8 +618,8 @@ const DuePage = () => {
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {[
                             { key: 'ALL',      label: 'All',      color: '#6366f1' },
-                            { key: 'YOU_GAVE', label: 'You Gave', color: '#ef4444' },
-                            { key: 'YOU_GOT',  label: 'You Got',  color: '#10b981' },
+                            { key: 'YOU_GAVE', label: 'You Gave (Nave)', color: '#ef4444' },
+                            { key: 'YOU_GOT',  label: 'You Got (Jama)',  color: '#10b981' },
                         ].map(({ key, label, color }) => (
                             <button key={key} onClick={() => setGlobalFilter(key)} style={{
                                 padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.82rem',
@@ -662,8 +662,8 @@ const DuePage = () => {
                                             : <CheckSquare size={17} className="text-blue" />}
                                     </th>
                                     <th>Category</th>
-                                    <th className="text-green">You Got</th>
-                                    <th className="text-red">You Gave</th>
+                                    <th className="text-green">You Got (Jama)</th>
+                                    <th className="text-red">You Gave (Nave)</th>
                                     <th>Net Balance</th>
                                 </tr>
                             </thead>

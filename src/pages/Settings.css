@@ -1,0 +1,8 @@
+
+.passcode-field { display: flex; flex-direction: column; gap: .45rem; color: var(--text-secondary); font-size: .8rem; font-weight: 600; min-width: 0; }
+.passcode-input { display: block; width: 100%; min-width: 0; box-sizing: border-box; padding: .75rem; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; color: var(--text-primary); font: inherit; font-size: .875rem; }
+.passcode-input::placeholder { color: var(--text-muted); font-weight: 400; }
+.passcode-input:focus { outline: 2px solid #60a5fa; outline-offset: 2px; border-color: transparent; }
+.passcode-input:disabled { opacity: .6; cursor: not-allowed; }
+.passcode-new { position: relative; }
+.passcode-new input { padding-right: 2.5rem; }

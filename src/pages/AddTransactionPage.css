@@ -516,3 +516,5 @@
     background: linear-gradient(135deg, #22c55e, #16a34a);
     box-shadow: 0 4px 18px rgba(34, 197, 94, 0.4);
 }
+
+.atp-op-main, .atf-op-main { white-space: normal; line-height: 1.4; }

@@ -372,20 +372,20 @@ const AddTransactionPage = () => {
                     </div>
                 )}
 
-                {/* You Got / You Gave */}
+                {/* You Got (Jama) / You Gave (Nave) */}
                 <div className="atp-op-tabs">
                     <button
                         className={`atp-op-tab ${op === 'got' ? 'atp-op-got' : ''}`}
                         onClick={() => setOp('got')}
                     >
-                        <span className="atp-op-main">YOU GOT</span>
+                        <span className="atp-op-main">You Got (Jama)</span>
                         <span className="atp-op-sub">Customer paid you</span>
                     </button>
                     <button
                         className={`atp-op-tab ${op === 'gave' ? 'atp-op-gave' : ''}`}
                         onClick={() => setOp('gave')}
                     >
-                        <span className="atp-op-main">YOU GAVE</span>
+                        <span className="atp-op-main">You Gave (Nave)</span>
                         <span className="atp-op-sub">You paid customer</span>
                     </button>
                 </div>

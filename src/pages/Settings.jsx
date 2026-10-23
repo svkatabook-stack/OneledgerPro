@@ -1,3 +1,4 @@
+import './Settings.css';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button } from '../components/ui/Primitives';
@@ -308,27 +309,22 @@ const Settings = () => {
 
                                         {editingRole === role && (
                                             <div style={{ marginTop: '0.5rem', padding: '0.875rem', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.6rem', alignItems: 'stretch' }}>
-                                                <input type="password" aria-label="Current Owner password" placeholder="Current Owner password" autoComplete="current-password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} disabled={savingPasscode} />
-                                                <input type="password" aria-label="Confirm new password" placeholder="Confirm new password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={savingPasscode} />
-                                                <div style={{ flex: 1, position: 'relative' }}>
-                                                    <input
+                                                <label className="passcode-field">Current Owner password<input className="passcode-input" type="password" aria-label="Current Owner password" placeholder="Current Owner password" autoComplete="current-password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} disabled={savingPasscode} /></label>
+                                                <label className="passcode-field">New password<div className="passcode-new">
+                                                    <input className="passcode-input" aria-label="New password" autoComplete="new-password" disabled={savingPasscode}
                                                         type={showNewPass ? 'text' : 'password'}
                                                         value={newPasscode}
                                                         onChange={e => setNewPasscode(e.target.value)}
                                                         placeholder="New passcode (min 6 chars)"
                                                         autoFocus
-                                                        style={{
-                                                            width: '100%', padding: '0.55rem 2.2rem 0.55rem 0.75rem',
-                                                            background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
-                                                            borderRadius: '7px', color: 'var(--text-primary)',
-                                                            fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box',
-                                                        }}
+
                                                     />
-                                                    <button type="button" onClick={() => setShowNewPass(!showNewPass)}
+                                                    <button type="button" aria-label={showNewPass ? 'Hide new password' : 'Show new password'} disabled={savingPasscode} onClick={() => setShowNewPass(!showNewPass)}
                                                         style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', display: 'flex' }}>
                                                         {showNewPass ? <EyeOff size={15} /> : <Eye size={15} />}
                                                     </button>
-                                                </div>
+                                                </div></label>
+                                                <label className="passcode-field">Confirm new password<input className="passcode-input" type="password" aria-label="Confirm new password" placeholder="Confirm new password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={savingPasscode} /></label>
                                                 <button
                                                     onClick={() => handlePasscodeSave(role)}
                                                     disabled={savingPasscode || newPasscode.length < 6 || newPasscode !== confirmPassword || !ownerPassword}

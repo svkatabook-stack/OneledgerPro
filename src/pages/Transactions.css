@@ -268,3 +268,11 @@
         justify-content: space-between;
     }
 }
+
+/* Bill search uses the same dark controls as the rest of the ledger. */
+.tx-bill-filter { flex-wrap: wrap; gap: .75rem; }
+.tx-bill-filter label { color: var(--text-secondary); font-size: .85rem; font-weight: 600; }
+.tx-bill-filter input { flex: 1 1 150px; min-width: 0; }
+.tx-clear-bill { flex: 0 0 auto; padding: .55rem .85rem; border: 1px solid rgba(96,165,250,.3); border-radius: 8px; background: rgba(59,130,246,.12); color: #93c5fd; font: inherit; font-size: .8rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.tx-clear-bill:hover { background: rgba(59,130,246,.22); border-color: #60a5fa; }
+.tx-clear-bill:focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; }

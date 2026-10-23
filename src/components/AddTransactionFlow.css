@@ -347,3 +347,5 @@
     border-color: var(--accent-blue);
     box-shadow:   0 0 0 2px rgba(59, 130, 246, 0.18);
 }
+
+.atp-op-main, .atf-op-main { white-space: normal; line-height: 1.4; }

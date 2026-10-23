@@ -54,7 +54,7 @@ test('local customer, category balances, photo, reload, export and navigation', 
     await page.locator('.atp-cust-row').filter({ hasText: 'Local Smoke Customer' }).click();
     if (category === 'Chit') await page.locator('.atp-scheme-pill').filter({ hasText: /^CHIT$/ }).click();
     else await page.locator('.atp-sub-pill').filter({ hasText: new RegExp(`^${subtype}$`) }).click();
-    if (gave) await page.getByRole('button', { name: /YOU GAVE/ }).click();
+    if (gave) await page.getByRole('button', { name: /You Gave/i }).click();
     await page.locator('.atp-amount-input').first().fill(amount);
     if (field === 'retailGold') {
       await page.getByLabel('Bill Number optional').fill(' gold/2026-42 ');

@@ -390,14 +390,14 @@ const AddTransactionFlow = ({ onClose, presetCustomerId = null }) => {
                             </div>
                         )}
 
-                        {/* YOU GOT / YOU GAVE tabs */}
+                        {/* You Got (Jama) / You Gave (Nave) tabs */}
                         <div className="atf-op-tabs">
                             <button
                                 className={`atf-op-tab ${form.operation === 'YOU_GOT' ? 'atf-op-got' : ''}`}
                                 onClick={() => setF('operation', 'YOU_GOT')}
                             >
                                 <TrendingUp size={16} style={{ marginBottom: '2px' }} />
-                                <span className="atf-op-main">YOU GOT</span>
+                                <span className="atf-op-main">You Got (Jama)</span>
                                 <span className="atf-op-sub">Customer gives to shop</span>
                             </button>
                             <button
@@ -405,7 +405,7 @@ const AddTransactionFlow = ({ onClose, presetCustomerId = null }) => {
                                 onClick={() => setF('operation', 'YOU_GAVE')}
                             >
                                 <TrendingDown size={16} style={{ marginBottom: '2px' }} />
-                                <span className="atf-op-main">YOU GAVE</span>
+                                <span className="atf-op-main">You Gave (Nave)</span>
                                 <span className="atf-op-sub">Shop gives to customer</span>
                             </button>
                         </div>
@@ -650,7 +650,7 @@ const AddTransactionFlow = ({ onClose, presetCustomerId = null }) => {
 
                         {/* Toggles */}
                         <div className="toggles-container">
-                            {/* Due Date — YOU GAVE only */}
+                            {/* Due Date — You Gave (Nave) only */}
                             {form.operation === 'YOU_GAVE' && (
                                 <>
                                     <label className="toggle-row">
